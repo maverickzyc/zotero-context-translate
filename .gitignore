@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+*.xpi
+.DS_Store
+.superpowers/
+*.log

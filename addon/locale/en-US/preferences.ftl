@@ -1,5 +1,11 @@
-pref-title = Addon Template Example
-pref-enable =
-    .label = Enable
-pref-input = Input
-pref-help = { $name } Build { $version } { $time }
+context-translate-prefs-llm-title = LLM Settings
+context-translate-prefs-llm-baseurl = API Base URL
+context-translate-prefs-llm-apikey = API Key
+context-translate-prefs-llm-model = Model
+context-translate-prefs-llm-temperature = Temperature
+context-translate-prefs-translate-title = Translation Settings
+context-translate-prefs-target-language = Target Language
+context-translate-prefs-auto-mode = Auto-translate on selection
+context-translate-prefs-glossary-title = Glossary
+context-translate-prefs-glossary-import = Import CSV
+context-translate-prefs-glossary-export = Export CSV

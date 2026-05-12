@@ -1,5 +1,11 @@
-pref-title = 插件模板设置示例
-pref-enable =
-    .label = 开启
-pref-input = 输入
-pref-help = { $name } Build { $version } { $time }
+context-translate-prefs-llm-title = LLM 设置
+context-translate-prefs-llm-baseurl = API 地址
+context-translate-prefs-llm-apikey = API 密钥
+context-translate-prefs-llm-model = 模型
+context-translate-prefs-llm-temperature = 温度
+context-translate-prefs-translate-title = 翻译设置
+context-translate-prefs-target-language = 目标语言
+context-translate-prefs-auto-mode = 选中文本自动翻译
+context-translate-prefs-glossary-title = 术语表
+context-translate-prefs-glossary-import = 导入 CSV
+context-translate-prefs-glossary-export = 导出 CSV

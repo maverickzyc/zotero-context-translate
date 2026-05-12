@@ -68,10 +68,15 @@ src/
 ## Current Status
 
 - [x] Design spec completed (docs/specs/2026-05-12-context-translate-design.md)
-- [ ] Implementation plan
-- [ ] Project scaffolding (zotero-plugin-template)
-- [ ] Context Engine implementation
-- [ ] Translation Layer implementation
+- [x] Implementation plan (docs/plans/2026-05-13-mvp-implementation.md)
+- [x] Project scaffolding (zotero-plugin-template)
+- [x] Context Engine (paragraph-detect, context-resolver, page-cache, text-extractor)
+- [x] Translation Layer (stream-parser, prompt-builder, glossary, llm-service)
+- [x] UI Layer (popup, preferences, history)
+- [x] Plugin wiring (hooks, lifecycle, locale)
+- [x] Build passing, XPI generated (32 unit tests passing)
+- [ ] Integration testing in Zotero 9
+- [ ] Release packaging
 - [ ] UI Layer implementation
 - [ ] Testing & packaging
 

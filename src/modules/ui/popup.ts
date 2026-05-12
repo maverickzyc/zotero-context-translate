@@ -46,7 +46,7 @@ export function createPopup(
         50%       { opacity: 0; }
       }
     `;
-    (doc.head || doc.documentElement).appendChild(style);
+    (doc.head || doc.documentElement)!.appendChild(style);
   }
 
   // ── container ────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export function appendChunk(
   cursor: HTMLElement,
   text: string,
 ): void {
-  const textNode = contentArea.ownerDocument.createTextNode(text);
+  const textNode = contentArea.ownerDocument!.createTextNode(text);
   contentArea.insertBefore(textNode, cursor);
 }
 
@@ -242,7 +242,7 @@ export function positionPopup(
   anchorY: number,
 ): void {
   const OFFSET = 10;
-  const doc = container.ownerDocument;
+  const doc = container.ownerDocument!;
   const vw = doc.defaultView?.innerWidth ?? 800;
   const vh = doc.defaultView?.innerHeight ?? 600;
 

@@ -58,8 +58,8 @@ export async function streamTranslation(
       return;
     }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
+    const streamReader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array> | undefined;
+    if (!streamReader) {
       callbacks.onError(new Error("Response body is not readable"));
       return;
     }
@@ -68,7 +68,7 @@ export async function streamTranslation(
     const parser = new SSEParser(callbacks);
 
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await (streamReader as any).read();
       if (done) {
         parser.finish();
         break;

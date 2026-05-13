@@ -247,7 +247,7 @@ async function handleTranslation(
   }
 
   // ── 6. Create popup in main window and position it ─────────────────────
-  const { container, dictArea, contentArea, actionsArea } = createPopup(contextResult.level);
+  const { container, dictArea, contentArea, analysisArea, actionsArea } = createPopup(contextResult.level);
   positionPopup(container, screenX, screenY);
 
   // Stage 1: Instant dictionary lookup (word-level only)
@@ -263,6 +263,11 @@ async function handleTranslation(
   // Stage 2: LLM contextual analysis (streaming)
   const cursor = appendStreamingCursor(contentArea);
 
+  // For sentence/paragraph level: detect --- separator to split into two areas
+  let inAnalysis = false;
+  let separatorBuffer = "";
+  let analysisCursor: HTMLElement | null = null;
+
   // ── 8. Stream translation ──────────────────────────────────────────────
   let fullText = "";
 
@@ -270,12 +275,61 @@ async function handleTranslation(
   await streamTranslation(messages, {
     onChunk(text: string) {
       fullText += text;
-      appendChunk(contentArea, cursor, text);
+
+      // For word level, stream everything to contentArea
+      if (contextResult.level === ContextLevel.Word) {
+        appendChunk(contentArea, cursor, text);
+        return;
+      }
+
+      // For sentence/paragraph: detect --- separator
+      if (!inAnalysis) {
+        separatorBuffer += text;
+        const sepIdx = separatorBuffer.indexOf("---");
+        if (sepIdx >= 0) {
+          // Output everything before --- to contentArea
+          const before = separatorBuffer.substring(0, sepIdx).replace(/\n+$/, "");
+          if (before) {
+            // Clear and rewrite contentArea with text before separator
+            removeCursor(cursor);
+            contentArea.textContent = before;
+          } else {
+            removeCursor(cursor);
+          }
+
+          // Switch to analysis area
+          inAnalysis = true;
+          analysisArea.style.display = "block";
+          analysisCursor = appendStreamingCursor(analysisArea);
+
+          // Output everything after --- to analysisArea
+          const after = separatorBuffer.substring(sepIdx + 3).replace(/^\n+/, "");
+          if (after && analysisCursor) {
+            appendChunk(analysisArea, analysisCursor, after);
+          }
+          separatorBuffer = "";
+        } else if (separatorBuffer.length > 200 || !separatorBuffer.includes("-")) {
+          // No separator likely coming, flush buffer to contentArea
+          appendChunk(contentArea, cursor, separatorBuffer);
+          separatorBuffer = "";
+        }
+        // Otherwise keep buffering (might be mid-separator like "text-" or "text--")
+      } else {
+        // Already past separator, stream to analysisArea
+        if (analysisCursor) {
+          appendChunk(analysisArea, analysisCursor, text);
+        }
+      }
     },
 
     async onDone(result: string) {
       fullText = result || fullText;
-      removeCursor(cursor);
+      // Flush any remaining buffer
+      if (separatorBuffer && !inAnalysis) {
+        contentArea.textContent = (contentArea.textContent || "") + separatorBuffer;
+      }
+      try { removeCursor(cursor); } catch { /* already removed */ }
+      if (analysisCursor) try { removeCursor(analysisCursor); } catch { /* ok */ }
 
       // Copy button
       addAction(actionsArea, "\u{1F4CB} 复制", () => {

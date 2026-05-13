@@ -32,6 +32,7 @@ export function createPopup(
   container: HTMLElement;
   dictArea: HTMLElement;
   contentArea: HTMLElement;
+  analysisArea: HTMLElement;
   actionsArea: HTMLElement;
 } {
   removePopup();
@@ -136,15 +137,27 @@ export function createPopup(
     flexShrink: "0",
   });
 
-  // ── Content area (LLM streaming) ────────────────────────────────────────
+  // ── Translation area (LLM streaming - primary) ──────────────────────────
   const contentArea = el(mainDoc, "div");
   Object.assign(contentArea.style, {
     padding: "12px 14px",
-    maxHeight: "260px",
+    maxHeight: "200px",
     overflowY: "auto",
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
     flexGrow: "1",
+  });
+
+  // ── Analysis area (LLM streaming - secondary, after ---) ───────────────
+  const analysisArea = el(mainDoc, "div");
+  Object.assign(analysisArea.style, {
+    padding: "10px 14px",
+    borderTop: "1px solid #313244",
+    fontSize: "13px",
+    color: "#a6adc8",
+    wordBreak: "break-word",
+    whiteSpace: "pre-wrap",
+    display: "none",
   });
 
   // ── Actions ─────────────────────────────────────────────────────────────
@@ -158,11 +171,11 @@ export function createPopup(
     flexShrink: "0",
   });
 
-  container.append(header, dictArea, contentArea, actionsArea);
+  container.append(header, dictArea, contentArea, analysisArea, actionsArea);
   attachDrag(mainDoc, header, container);
   mainDoc.documentElement!.appendChild(container);
 
-  return { container, dictArea, contentArea, actionsArea };
+  return { container, dictArea, contentArea, analysisArea, actionsArea };
 }
 
 export function positionPopup(container: HTMLElement, screenX: number, screenY: number): void {

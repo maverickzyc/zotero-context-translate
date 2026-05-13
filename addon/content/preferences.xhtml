@@ -3,47 +3,44 @@
      id="context-translate-prefs"
      onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })">
 
-  <!-- LLM Presets -->
+  <!-- LLM Configuration -->
   <groupbox>
-    <label><html:h2>LLM 模型预设</html:h2></label>
-
-    <vbox id="context-translate-presets-list" style="margin: 4px 0;">
-      <!-- Populated dynamically -->
-    </vbox>
-
-    <hbox style="margin: 8px 0;">
-      <button label="+ 添加预设"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('addPreset', { window })"/>
-    </hbox>
-
-    <separator/>
-    <label><html:h3>编辑预设</html:h3></label>
+    <label><html:h2>LLM 配置</html:h2></label>
 
     <hbox align="center" style="margin: 4px 0;">
-      <label value="名称" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-preset-name" style="flex: 1;"/>
+      <label value="服务商" style="width: 100px;"/>
+      <menulist id="context-translate-provider"
+                oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('providerChange', { window, value: this.value })">
+        <menupopup id="context-translate-provider-popup">
+          <!-- Populated dynamically -->
+        </menupopup>
+      </menulist>
     </hbox>
+
     <hbox align="center" style="margin: 4px 0;">
       <label value="API Base URL" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-preset-baseUrl" style="flex: 1;"/>
+      <html:input type="text" id="context-translate-baseUrl" style="flex: 1;"/>
     </hbox>
+
     <hbox align="center" style="margin: 4px 0;">
       <label value="API Key" style="width: 100px;"/>
-      <html:input type="password" id="context-translate-preset-apiKey" style="flex: 1;"/>
+      <html:input type="password" id="context-translate-apiKey" style="flex: 1;"/>
     </hbox>
+
     <hbox align="center" style="margin: 4px 0;">
       <label value="Model" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-preset-model" style="flex: 1;"/>
+      <html:input type="text" id="context-translate-model" style="flex: 1;"/>
     </hbox>
+
     <hbox align="center" style="margin: 4px 0;">
       <label value="Temperature" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-preset-temperature" style="width: 80px;"/>
+      <html:input type="text" id="context-translate-temperature" style="width: 80px;"/>
     </hbox>
-    <hbox style="margin: 4px 0;">
-      <button label="保存预设"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('savePreset', { window })"/>
-      <button label="删除预设"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('deletePreset', { window })"/>
+
+    <hbox style="margin: 8px 0;">
+      <button label="保存配置"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('saveConfig', { window })"/>
+      <label id="context-translate-save-status" value="" style="color: #4ade80; margin-left: 8px;"/>
     </hbox>
   </groupbox>
 

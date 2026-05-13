@@ -17,6 +17,15 @@ export interface LLMPreset {
   temperature: string;
 }
 
+export const BUILTIN_PROVIDERS: Omit<LLMPreset, "apiKey">[] = [
+  { name: "DeepSeek", baseUrl: "https://api.deepseek.com/v1", model: "deepseek-chat", temperature: "0.3" },
+  { name: "OpenAI", baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", temperature: "0.3" },
+  { name: "OpenRouter", baseUrl: "https://openrouter.ai/api/v1", model: "deepseek/deepseek-chat", temperature: "0.3" },
+  { name: "Ollama (本地)", baseUrl: "http://localhost:11434/v1", model: "qwen2.5", temperature: "0.3" },
+  { name: "Claude", baseUrl: "https://api.anthropic.com/v1", model: "claude-sonnet-4-6", temperature: "0.3" },
+  { name: "自定义", baseUrl: "", model: "", temperature: "0.3" },
+];
+
 const prefix = "extensions.zotero.contextTranslate";
 
 export function getPresets(): LLMPreset[] {

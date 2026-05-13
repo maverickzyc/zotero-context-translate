@@ -36,9 +36,8 @@ import {
   onPrefsLoad,
   onImportGlossary,
   onExportGlossary,
-  onAddPreset,
-  onSavePreset,
-  onDeletePreset,
+  onProviderChange,
+  onSaveConfig,
   onDownloadDict,
 } from "./modules/ui/preferences";
 import { ContextLevel, GlossaryEntry } from "./types";
@@ -122,14 +121,11 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
     case "load":
       await onPrefsLoad(data.window);
       break;
-    case "addPreset":
-      onAddPreset(data.window);
+    case "providerChange":
+      onProviderChange(data.window, data.value);
       break;
-    case "savePreset":
-      onSavePreset(data.window);
-      break;
-    case "deletePreset":
-      onDeletePreset(data.window);
+    case "saveConfig":
+      onSaveConfig(data.window);
       break;
     case "downloadDict":
       await onDownloadDict(data.window, data.type);

@@ -1,113 +1,105 @@
 import { loadGlossary, saveGlossary, glossaryFromCSV, glossaryToCSV } from "../translate/glossary";
-import { getPresets, setActiveIndex, LLMPreset } from "../translate/llm-service";
+import { getPresets, setActiveIndex, BUILTIN_PROVIDERS, LLMPreset } from "../translate/llm-service";
 import { getDictStatus, downloadDictionary } from "../context/dictionary";
 
 const prefix = "extensions.zotero.contextTranslate";
 
-let editingIndex = -1;
-
 export async function onPrefsLoad(win: Window): Promise<void> {
   await updateGlossaryCount(win);
   await updateDictStatus(win);
-  renderPresetList(win);
+  populateProviderDropdown(win);
+  loadCurrentConfig(win);
 }
 
-// ─── Presets ──────────────────────────────────────────────────────────────────
+// ─── Provider dropdown + config ───────────────────────────────────────────────
 
-function renderPresetList(win: Window): void {
-  const container = win.document.getElementById("context-translate-presets-list");
-  if (!container) return;
-  container.innerHTML = "";
+function populateProviderDropdown(win: Window): void {
+  const popup = win.document.getElementById("context-translate-provider-popup");
+  if (!popup) return;
 
+  // Clear existing items
+  while (popup.firstChild) popup.removeChild(popup.firstChild);
+
+  // Add built-in providers
+  for (const provider of BUILTIN_PROVIDERS) {
+    const item = win.document.createXULElement("menuitem");
+    item.setAttribute("label", provider.name);
+    item.setAttribute("value", provider.name);
+    popup.appendChild(item);
+  }
+
+  // Set current selection based on saved config
   const presets = getPresets();
   const activeIndex = (Zotero.Prefs.get(`${prefix}.llm.activeIndex`, true) as number) ?? 0;
-
-  if (presets.length === 0) {
-    const empty = win.document.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
-    empty.textContent = "暂无预设，请添加";
-    empty.style.cssText = "color: #888; padding: 4px 0;";
-    container.appendChild(empty);
-    return;
-  }
-
-  for (let i = 0; i < presets.length; i++) {
-    const p = presets[i];
-    const row = win.document.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
-    row.style.cssText = "display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer;";
-    if (i === activeIndex) row.style.fontWeight = "bold";
-
-    const star = win.document.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
-    star.textContent = i === activeIndex ? "★" : "☆";
-    star.style.cursor = "pointer";
-    star.addEventListener("click", () => {
-      setActiveIndex(i);
-      renderPresetList(win);
-    });
-
-    const name = win.document.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
-    name.textContent = `${p.name} (${p.model})`;
-    name.style.flex = "1";
-    name.addEventListener("click", () => {
-      editingIndex = i;
-      fillPresetForm(win, p);
-    });
-
-    row.append(star, name);
-    container.appendChild(row);
-  }
-}
-
-function fillPresetForm(win: Window, preset: LLMPreset): void {
-  const setVal = (id: string, val: string) => {
-    const el = win.document.getElementById(id) as HTMLInputElement | null;
-    if (el) el.value = val;
-  };
-  setVal("context-translate-preset-name", preset.name);
-  setVal("context-translate-preset-baseUrl", preset.baseUrl);
-  setVal("context-translate-preset-apiKey", preset.apiKey);
-  setVal("context-translate-preset-model", preset.model);
-  setVal("context-translate-preset-temperature", preset.temperature);
-}
-
-export function onAddPreset(win: Window): void {
-  editingIndex = -1;
-  fillPresetForm(win, { name: "", baseUrl: "https://api.openai.com/v1", apiKey: "", model: "", temperature: "0.3" });
-}
-
-export function onSavePreset(win: Window): void {
-  const getVal = (id: string) => (win.document.getElementById(id) as HTMLInputElement)?.value || "";
-  const preset: LLMPreset = {
-    name: getVal("context-translate-preset-name") || "Unnamed",
-    baseUrl: getVal("context-translate-preset-baseUrl"),
-    apiKey: getVal("context-translate-preset-apiKey"),
-    model: getVal("context-translate-preset-model"),
-    temperature: getVal("context-translate-preset-temperature"),
-  };
-
-  const presets = getPresets();
-  if (editingIndex >= 0 && editingIndex < presets.length) {
-    presets[editingIndex] = preset;
+  const menulist = win.document.getElementById("context-translate-provider") as any;
+  if (menulist && presets.length > 0 && presets[activeIndex]) {
+    menulist.value = presets[activeIndex].name;
   } else {
-    presets.push(preset);
-    editingIndex = presets.length - 1;
+    menulist.value = "DeepSeek";
   }
-
-  Zotero.Prefs.set(`${prefix}.llm.presets`, JSON.stringify(presets), true);
-  if (presets.length === 1) setActiveIndex(0);
-  renderPresetList(win);
 }
 
-export function onDeletePreset(win: Window): void {
-  if (editingIndex < 0) return;
+function loadCurrentConfig(win: Window): void {
   const presets = getPresets();
-  if (editingIndex >= presets.length) return;
-  presets.splice(editingIndex, 1);
-  Zotero.Prefs.set(`${prefix}.llm.presets`, JSON.stringify(presets), true);
   const activeIndex = (Zotero.Prefs.get(`${prefix}.llm.activeIndex`, true) as number) ?? 0;
-  if (activeIndex >= presets.length) setActiveIndex(Math.max(0, presets.length - 1));
-  editingIndex = -1;
-  fillPresetForm(win, { name: "", baseUrl: "", apiKey: "", model: "", temperature: "0.3" });
-  renderPresetList(win);
+
+  if (presets.length > 0 && presets[activeIndex]) {
+    const p = presets[activeIndex];
+    setField(win, "context-translate-baseUrl", p.baseUrl);
+    setField(win, "context-translate-apiKey", p.apiKey);
+    setField(win, "context-translate-model", p.model);
+    setField(win, "context-translate-temperature", p.temperature);
+  } else {
+    // Load from default provider
+    const defaultProvider = BUILTIN_PROVIDERS[0];
+    setField(win, "context-translate-baseUrl", defaultProvider.baseUrl);
+    setField(win, "context-translate-apiKey", "");
+    setField(win, "context-translate-model", defaultProvider.model);
+    setField(win, "context-translate-temperature", defaultProvider.temperature);
+  }
+}
+
+export function onProviderChange(win: Window, providerName: string): void {
+  const provider = BUILTIN_PROVIDERS.find(p => p.name === providerName);
+  if (!provider) return;
+
+  // Fill form with provider defaults (keep existing API key)
+  if (provider.baseUrl) setField(win, "context-translate-baseUrl", provider.baseUrl);
+  if (provider.model) setField(win, "context-translate-model", provider.model);
+  setField(win, "context-translate-temperature", provider.temperature);
+}
+
+export function onSaveConfig(win: Window): void {
+  const providerMenu = win.document.getElementById("context-translate-provider") as any;
+  const providerName = providerMenu?.value || "自定义";
+
+  const preset: LLMPreset = {
+    name: providerName,
+    baseUrl: getField(win, "context-translate-baseUrl"),
+    apiKey: getField(win, "context-translate-apiKey"),
+    model: getField(win, "context-translate-model"),
+    temperature: getField(win, "context-translate-temperature") || "0.3",
+  };
+
+  // Save as the single active preset (replace all presets for simplicity)
+  Zotero.Prefs.set(`${prefix}.llm.presets`, JSON.stringify([preset]), true);
+  setActiveIndex(0);
+
+  // Show success feedback
+  const status = win.document.getElementById("context-translate-save-status");
+  if (status) {
+    status.setAttribute("value", "✓ 已保存");
+    win.setTimeout(() => status.setAttribute("value", ""), 2000);
+  }
+}
+
+function setField(win: Window, id: string, value: string): void {
+  const el = win.document.getElementById(id) as HTMLInputElement | null;
+  if (el) el.value = value;
+}
+
+function getField(win: Window, id: string): string {
+  return (win.document.getElementById(id) as HTMLInputElement)?.value || "";
 }
 
 // ─── Dictionary ───────────────────────────────────────────────────────────────

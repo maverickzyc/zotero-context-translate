@@ -10,11 +10,19 @@ export interface DictStatus {
   entryCount: number;
 }
 
-// Placeholder URLs — replace with real hosted JSON URLs when available
-const DICT_URLS: Record<"light" | "full", string> = {
-  light:
-    "https://github.com/skywind3000/ECDICT/releases/download/v1.0.28/ecdict-sqlite-28.zip",
-  full: "https://github.com/skywind3000/ECDICT/releases/download/v1.0.28/ecdict-sqlite-28.zip",
+// Dictionary download URLs with China-accessible mirrors
+// Users can also place a dict JSON file manually at the profile path
+const DICT_URLS: Record<"light" | "full", string[]> = {
+  light: [
+    "https://fastly.jsdelivr.net/npm/ecdict@latest/data/ecdict-mini.json",
+    "https://cdn.jsdelivr.net/npm/ecdict@latest/data/ecdict-mini.json",
+    "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict-mini.json",
+  ],
+  full: [
+    "https://fastly.jsdelivr.net/npm/ecdict@latest/data/ecdict.json",
+    "https://cdn.jsdelivr.net/npm/ecdict@latest/data/ecdict.json",
+    "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.json",
+  ],
 };
 
 let dictData: Record<string, { p: string; t: string; s: string }> = {};
@@ -135,19 +143,27 @@ export async function downloadDictionary(
   type: "light" | "full",
   onProgress?: (pct: number) => void,
 ): Promise<void> {
-  const url = DICT_URLS[type];
-  Zotero.log(
-    `[ContextTranslate] Downloading ${type} dictionary from ${url}`,
-    "warning",
-  );
+  const urls = DICT_URLS[type];
+  let response: Response | null = null;
+  let lastError: Error | null = null;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(
-      `Dictionary download failed: HTTP ${response.status} ${response.statusText}`,
-    );
+  for (const url of urls) {
+    try {
+      Zotero.log(`[ContextTranslate] Trying dictionary from ${url}`, "warning");
+      const r = await fetch(url);
+      if (r.ok) {
+        response = r;
+        break;
+      }
+    } catch (err: any) {
+      lastError = err;
+      Zotero.log(`[ContextTranslate] Mirror failed: ${url} - ${err?.message}`, "warning");
+    }
   }
 
+  if (!response) {
+    throw new Error(`所有下载地址均失败。您可以手动下载词典 JSON 文件放到 Zotero Profile 目录。\n${lastError?.message || ""}`);
+  }
   // Stream-read with progress reporting when Content-Length is known
   const contentLength = Number(response.headers.get("Content-Length") ?? "0");
   const reader = response.body?.getReader();

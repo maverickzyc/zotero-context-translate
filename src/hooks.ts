@@ -6,6 +6,7 @@ import {
   getSelectedText,
   getCurrentPageNumber,
   getPageTextWithNeighbors,
+  debugReaderStructure,
 } from "./modules/context/text-extractor";
 import { resolveContext } from "./modules/context/context-resolver";
 import { clearAllCache } from "./modules/context/page-cache";
@@ -120,21 +121,52 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
   (event) => {
     const { reader, doc, params, append } = event;
 
-    // Capture selected text from params or selection API
-    const paramsAnnotation = (params as any)?.annotation;
-    const selectionText = paramsAnnotation?.text
-      || doc.getSelection()?.toString()
-      || null;
+    // DEBUG: dump params structure to understand the API
+    let paramsDebug = "";
+    try {
+      paramsDebug = JSON.stringify(params, (key, val) => {
+        if (typeof val === "object" && val !== null && key !== "") {
+          return `[${typeof val}: ${Object.keys(val).join(",")}]`;
+        }
+        return val;
+      }, 2);
+    } catch { paramsDebug = String(params); }
+    Zotero.log(`[ContextTranslate] params dump: ${paramsDebug}`, "warning");
 
-    if (!selectionText) return;
+    // Try multiple ways to get selected text
+    const p = params as any;
+    const candidates = [
+      p?.annotation?.text,
+      p?.text,
+      p?.selectedText,
+      p?.annotation?.comment,
+      doc.getSelection()?.toString(),
+      getSelectedText(reader),
+    ];
 
-    // Auto-trigger translation immediately
-    // Use a small container to get position info from the selection popup
+    // Find first candidate that is a real string (not "[object Object]")
+    let selectionText: string | null = null;
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim() && c !== "[object Object]") {
+        selectionText = c.trim();
+        break;
+      }
+    }
+
+    Zotero.log(`[ContextTranslate] candidates: ${candidates.map(c => `${typeof c}:"${String(c).substring(0, 30)}"`).join(" | ")}`, "warning");
+    Zotero.log(`[ContextTranslate] final: "${selectionText?.substring(0, 50)}"`, "warning");
+
+    if (!selectionText) {
+      Zotero.log("[ContextTranslate] DEBUG: No text found from any method!", "warning");
+      return;
+    }
+
+    Zotero.log(`[ContextTranslate] DEBUG final selectionText: "${selectionText.substring(0, 100)}"`, "warning");
+
+    // Auto-trigger translation
     const anchor = doc.createElement("span");
     append(anchor);
 
-    // Get position from the appended element's location in the popup
-    // Short delay to let the popup render so we can measure position
     doc.defaultView?.setTimeout(() => {
       const rect = anchor.getBoundingClientRect();
       handleTranslation(
@@ -166,12 +198,19 @@ async function handleTranslation(
 ) {
   try {
   // ── 1. Gather selected text ────────────────────────────────────────────
-  const selectedText = getSelectedText(reader) || fallbackText;
+  // fallbackText (from event params) is most reliable; getSelectedText uses unstable internal API
+  const internalText = getSelectedText(reader);
+  const validInternal = typeof internalText === "string"
+    && internalText.trim()
+    && !internalText.includes("[object")
+    ? internalText.trim()
+    : null;
+  const selectedText = fallbackText || validInternal;
   if (!selectedText) {
     Zotero.log("[ContextTranslate] No selected text found", "warning");
     return;
   }
-  Zotero.log(`[ContextTranslate] Selected: "${selectedText.substring(0, 50)}..."`, "warning");
+  Zotero.log(`[ContextTranslate] Selected: "${selectedText.substring(0, 50)}"`, "warning");
 
   const pageNumber = getCurrentPageNumber(reader) || 1;
 
@@ -189,10 +228,15 @@ async function handleTranslation(
   }
 
   // ── 2. Extract page text with neighboring paragraphs ───────────────────
+  // DEBUG: explore reader structure first
+  debugReaderStructure(reader);
+
   let pageData;
   try {
     pageData = await getPageTextWithNeighbors(reader, itemID, pageNumber);
-  } catch {
+    Zotero.log(`[ContextTranslate] Page text extracted: ${pageData.paragraphs.length} paragraphs, ${pageData.rawText.length} chars`, "warning");
+  } catch (extractErr: any) {
+    Zotero.log(`[ContextTranslate] Page extraction FAILED: ${extractErr?.message || extractErr}`, "warning");
     pageData = {
       paragraphs: [selectedText],
       rawText: selectedText,
@@ -241,6 +285,12 @@ async function handleTranslation(
   );
   (doc.body ?? doc.documentElement)!.appendChild(container);
   positionPopup(container, anchorX, anchorY);
+
+  // DEBUG: show what we're sending to the LLM
+  const debugInfo = doc.createElement("div");
+  debugInfo.style.cssText = "font-size:10px; color:#6c7086; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;";
+  debugInfo.textContent = `[DEBUG] selected="${selectedText.substring(0, 50)}" | context="${contextResult.context.substring(0, 80)}..." | level=${contextResult.level}`;
+  contentArea.appendChild(debugInfo);
 
   const cursor = appendStreamingCursor(doc, contentArea);
 

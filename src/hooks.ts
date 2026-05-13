@@ -19,7 +19,7 @@ import { streamTranslation } from "./modules/translate/llm-service";
 import {
   createPopup,
   removePopup,
-  openPopupAtScreen,
+  positionPopup,
   appendStreamingCursor,
   appendChunk,
   removeCursor,
@@ -214,9 +214,9 @@ async function handleTranslation(
     targetLanguage,
   });
 
-  // ── 6. Create XUL panel popup in main window ────────────────────────────
-  const { panel, contentArea, actionsArea } = createPopup(contextResult.level);
-  openPopupAtScreen(panel, screenX, screenY);
+  // ── 6. Create popup in main window and position it ─────────────────────
+  const { container, contentArea, actionsArea } = createPopup(contextResult.level);
+  positionPopup(container, screenX, screenY);
 
   const cursor = appendStreamingCursor(contentArea);
 
@@ -306,8 +306,9 @@ async function handleTranslation(
     Zotero.log(`[ContextTranslate] Error: ${msg}`, "error");
     // Show error in a popup so user knows something went wrong
     removePopup();
+    removePopup();
     const errPopup = createPopup(ContextLevel.Word);
-    openPopupAtScreen(errPopup.panel, screenX, screenY);
+    positionPopup(errPopup.container, screenX, screenY);
     errPopup.contentArea.textContent = `❌ 错误: ${msg}`;
     errPopup.contentArea.style.color = "#f38ba8";
     addAction(errPopup.actionsArea, "关闭", () => removePopup());

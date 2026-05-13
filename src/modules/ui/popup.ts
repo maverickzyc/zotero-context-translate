@@ -1,6 +1,6 @@
 import { ContextLevel } from "../../types";
 
-const PANEL_ID = "ctx-translate-panel";
+const POPUP_ID = "ctx-translate-popup";
 
 const LEVEL_CONFIG: Record<ContextLevel, { color: string; label: string }> = {
   [ContextLevel.Word]: { color: "#818cf8", label: "词汇" },
@@ -8,42 +8,41 @@ const LEVEL_CONFIG: Record<ContextLevel, { color: string; label: string }> = {
   [ContextLevel.Paragraph]: { color: "#fb923c", label: "段落" },
 };
 
-export function removePopup(doc?: Document): void {
-  // Remove from main window
-  const mainWin = Zotero.getMainWindow();
-  const panel = mainWin?.document.getElementById(PANEL_ID);
-  if (panel) {
-    try { (panel as any).hidePopup?.(); } catch { /* ignore */ }
-    panel.remove();
-  }
-  // Also clean up from reader doc if passed
-  if (doc) {
-    doc.getElementById(PANEL_ID)?.remove();
-  }
+export function removePopup(): void {
+  const mainDoc = Zotero.getMainWindow()?.document;
+  if (!mainDoc) return;
+  const existing = mainDoc.getElementById(POPUP_ID);
+  if (existing) existing.remove();
 }
 
 export function createPopup(
   level: ContextLevel,
 ): {
-  panel: XUL.Element;
+  container: HTMLElement;
   contentArea: HTMLElement;
   actionsArea: HTMLElement;
 } {
-  const mainWin = Zotero.getMainWindow();
-  const mainDoc = mainWin.document;
-
   removePopup();
 
+  const mainWin = Zotero.getMainWindow();
+  const mainDoc = mainWin.document;
   const cfg = LEVEL_CONFIG[level];
 
-  // Create XUL panel in the main Zotero window
-  const panel = mainDoc.createXULElement("panel") as any;
-  panel.id = PANEL_ID;
-  panel.setAttribute("noautohide", "true");
-  panel.setAttribute("level", "floating");
-  panel.setAttribute("backdrag", "true");
-  Object.assign(panel.style, {
-    maxWidth: "440px",
+  // Inject blink keyframes once
+  if (!mainDoc.getElementById("ctx-blink-style")) {
+    const style = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "style") as HTMLElement;
+    style.id = "ctx-blink-style";
+    style.textContent = `@keyframes ctx-blink { 0%,100%{opacity:1} 50%{opacity:0} }`;
+    mainDoc.documentElement!.appendChild(style);
+  }
+
+  // Container — fixed position in the main Zotero window
+  const container = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+  container.id = POPUP_ID;
+  Object.assign(container.style, {
+    position: "fixed",
+    zIndex: "99999",
+    maxWidth: "420px",
     minWidth: "240px",
     background: "#1e1e2e",
     color: "#cdd6f4",
@@ -53,21 +52,24 @@ export function createPopup(
     fontFamily: "system-ui, -apple-system, sans-serif",
     fontSize: "14px",
     lineHeight: "1.6",
+    display: "flex",
+    flexDirection: "column",
     overflow: "hidden",
-    padding: "0",
+    userSelect: "text",
   });
 
-  // Header
-  const header = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+  // Header (drag handle)
+  const header = el(mainDoc, "div");
   Object.assign(header.style, {
     display: "flex",
     alignItems: "center",
     padding: "8px 12px",
     background: "#181825",
     cursor: "grab",
+    flexShrink: "0",
   });
 
-  const badge = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
+  const badge = el(mainDoc, "span");
   Object.assign(badge.style, {
     display: "inline-block",
     padding: "2px 8px",
@@ -79,85 +81,76 @@ export function createPopup(
   });
   badge.textContent = cfg.label;
 
-  const title = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
-  Object.assign(title.style, {
-    marginLeft: "8px",
-    fontSize: "12px",
-    color: "#a6adc8",
-    flex: "1",
-  });
+  const title = el(mainDoc, "span");
+  Object.assign(title.style, { marginLeft: "8px", fontSize: "12px", color: "#a6adc8", flex: "1" });
   title.textContent = "Context Translate";
 
-  const closeBtn = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
+  const closeBtn = el(mainDoc, "span");
   Object.assign(closeBtn.style, {
-    cursor: "pointer",
-    fontSize: "16px",
-    color: "#6c7086",
-    padding: "0 4px",
-    lineHeight: "1",
+    cursor: "pointer", fontSize: "16px", color: "#6c7086", padding: "0 4px", lineHeight: "1",
   });
   closeBtn.textContent = "✕";
   closeBtn.addEventListener("mouseenter", () => { closeBtn.style.color = "#f38ba8"; });
   closeBtn.addEventListener("mouseleave", () => { closeBtn.style.color = "#6c7086"; });
   closeBtn.addEventListener("click", () => removePopup());
 
-  header.appendChild(badge);
-  header.appendChild(title);
-  header.appendChild(closeBtn);
+  header.append(badge, title, closeBtn);
 
   // Content area
-  const contentArea = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+  const contentArea = el(mainDoc, "div");
   Object.assign(contentArea.style, {
     padding: "12px 14px",
     maxHeight: "300px",
     overflowY: "auto",
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
+    flexGrow: "1",
   });
 
   // Actions area
-  const actionsArea = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+  const actionsArea = el(mainDoc, "div");
   Object.assign(actionsArea.style, {
     display: "flex",
     flexWrap: "wrap",
     gap: "6px",
     padding: "8px 12px",
     borderTop: "1px solid #313244",
+    flexShrink: "0",
   });
 
-  panel.appendChild(header);
-  panel.appendChild(contentArea);
-  panel.appendChild(actionsArea);
+  container.append(header, contentArea, actionsArea);
 
-  // Add to main document's popupset (or body)
-  const popupset = mainDoc.getElementById("mainPopupSet")
-    || mainDoc.querySelector("popupset")
-    || mainDoc.documentElement;
-  popupset!.appendChild(panel);
+  // Drag — works because container is in the MAIN window document,
+  // not trapped inside the reader iframe
+  attachDrag(mainDoc, header, container);
 
-  return { panel, contentArea, actionsArea };
+  // Add to main window
+  mainDoc.documentElement!.appendChild(container);
+
+  return { container, contentArea, actionsArea };
 }
 
-export function openPopupAtScreen(
-  panel: XUL.Element,
+export function positionPopup(
+  container: HTMLElement,
   screenX: number,
   screenY: number,
 ): void {
-  (panel as any).openPopupAtScreen(screenX, screenY, false);
+  const mainWin = Zotero.getMainWindow();
+  // Convert screen coordinates to main window coordinates
+  const left = screenX - mainWin.screenX;
+  const top = screenY - mainWin.screenY;
+
+  const vw = mainWin.innerWidth;
+  const vh = mainWin.innerHeight;
+
+  container.style.left = `${Math.min(left, vw - 450)}px`;
+  container.style.top = `${Math.min(top, vh - 200)}px`;
 }
 
-// ─── Streaming helpers ────────────────────────────────────────────────────────
+// ─── Streaming ────────────────────────────────────────────────────────────────
 
 export function appendStreamingCursor(contentArea: HTMLElement): HTMLElement {
   const doc = contentArea.ownerDocument!;
-
-  if (!doc.getElementById("ctx-blink-style")) {
-    const style = doc.createElementNS("http://www.w3.org/1999/xhtml", "style") as HTMLElement;
-    style.id = "ctx-blink-style";
-    style.textContent = `@keyframes ctx-blink { 0%,100%{opacity:1} 50%{opacity:0} }`;
-    (doc.head || doc.documentElement)!.appendChild(style);
-  }
-
   const cursor = doc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
   Object.assign(cursor.style, {
     display: "inline-block",
@@ -177,19 +170,13 @@ export function removeCursor(cursor: HTMLElement): void {
 }
 
 export function appendChunk(contentArea: HTMLElement, cursor: HTMLElement, text: string): void {
-  const textNode = contentArea.ownerDocument!.createTextNode(text);
-  contentArea.insertBefore(textNode, cursor);
+  contentArea.insertBefore(contentArea.ownerDocument!.createTextNode(text), cursor);
 }
 
-// ─── Action buttons ───────────────────────────────────────────────────────────
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
-export function addAction(
-  actionsArea: HTMLElement,
-  label: string,
-  onClick: () => void,
-): HTMLElement {
-  const doc = actionsArea.ownerDocument!;
-  const btn = doc.createElementNS("http://www.w3.org/1999/xhtml", "button") as HTMLElement;
+export function addAction(actionsArea: HTMLElement, label: string, onClick: () => void): HTMLElement {
+  const btn = el(actionsArea.ownerDocument!, "button");
   btn.textContent = label;
   Object.assign(btn.style, {
     padding: "4px 12px",
@@ -199,11 +186,44 @@ export function addAction(
     color: "#cdd6f4",
     fontSize: "12px",
     cursor: "pointer",
-    transition: "background 0.15s",
   });
   btn.addEventListener("mouseenter", () => { btn.style.background = "#45475a"; });
   btn.addEventListener("mouseleave", () => { btn.style.background = "#313244"; });
   btn.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
   actionsArea.appendChild(btn);
   return btn;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function el(doc: Document, tag: string): HTMLElement {
+  return doc.createElementNS("http://www.w3.org/1999/xhtml", tag) as HTMLElement;
+}
+
+function attachDrag(doc: Document, handle: HTMLElement, container: HTMLElement): void {
+  let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+  function onMouseDown(e: MouseEvent) {
+    startX = e.screenX;
+    startY = e.screenY;
+    origLeft = parseFloat(container.style.left) || 0;
+    origTop = parseFloat(container.style.top) || 0;
+    handle.style.cursor = "grabbing";
+    e.preventDefault();
+    doc.addEventListener("mousemove", onMouseMove, true);
+    doc.addEventListener("mouseup", onMouseUp, true);
+  }
+
+  function onMouseMove(e: MouseEvent) {
+    container.style.left = `${origLeft + (e.screenX - startX)}px`;
+    container.style.top = `${origTop + (e.screenY - startY)}px`;
+  }
+
+  function onMouseUp() {
+    handle.style.cursor = "grab";
+    doc.removeEventListener("mousemove", onMouseMove, true);
+    doc.removeEventListener("mouseup", onMouseUp, true);
+  }
+
+  handle.addEventListener("mousedown", onMouseDown);
 }

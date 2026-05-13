@@ -119,11 +119,19 @@ async function updateDictStatus(win: Window): Promise<void> {
 export async function onDownloadDict(win: Window, type: "light" | "full"): Promise<void> {
   const progress = win.document.getElementById("context-translate-dict-progress");
   try {
-    if (progress) progress.setAttribute("value", "下载中... 0%");
+    if (progress) progress.setAttribute("value", "正在连接...");
     await downloadDictionary(type, (pct) => {
-      if (progress) progress.setAttribute("value", `下载中... ${pct}%`);
+      const labels: Record<number, string> = {
+        0: "正在连接...",
+        5: "正在下载 CSV (~65MB)...",
+        50: "下载完成，正在转换为词典...",
+        92: "正在保存...",
+        100: "完成！",
+      };
+      const label = labels[pct] || `处理中... ${pct}%`;
+      if (progress) progress.setAttribute("value", label);
     });
-    if (progress) progress.setAttribute("value", "下载完成！");
+    if (progress) progress.setAttribute("value", "✓ 词典安装完成！");
     await updateDictStatus(win);
   } catch (err: any) {
     if (progress) progress.setAttribute("value", `下载失败: ${err?.message}`);

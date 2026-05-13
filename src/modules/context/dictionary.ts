@@ -10,20 +10,12 @@ export interface DictStatus {
   entryCount: number;
 }
 
-// Dictionary download URLs with China-accessible mirrors
-// Users can also place a dict JSON file manually at the profile path
-const DICT_URLS: Record<"light" | "full", string[]> = {
-  light: [
-    "https://fastly.jsdelivr.net/npm/ecdict@latest/data/ecdict-mini.json",
-    "https://cdn.jsdelivr.net/npm/ecdict@latest/data/ecdict-mini.json",
-    "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict-mini.json",
-  ],
-  full: [
-    "https://fastly.jsdelivr.net/npm/ecdict@latest/data/ecdict.json",
-    "https://cdn.jsdelivr.net/npm/ecdict@latest/data/ecdict.json",
-    "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.json",
-  ],
-};
+// ECDICT CSV source — available on GitHub, we convert to JSON locally
+// The CSV columns: word,phonetic,definition,translation,pos,collins,oxford,tag,bnc,frq,exchange,detail,audio
+const ECDICT_CSV_URLS = [
+  "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv",
+  "https://fastly.jsdelivr.net/gh/skywind3000/ECDICT@master/ecdict.csv",
+];
 
 let dictData: Record<string, { p: string; t: string; s: string }> = {};
 let loadPromise: Promise<void> | null = null;
@@ -143,74 +135,87 @@ export async function downloadDictionary(
   type: "light" | "full",
   onProgress?: (pct: number) => void,
 ): Promise<void> {
-  const urls = DICT_URLS[type];
-  let response: Response | null = null;
-  let lastError: Error | null = null;
+  // Step 1: Download CSV from GitHub
+  onProgress?.(0);
 
-  for (const url of urls) {
+  let response: Response | null = null;
+  for (const url of ECDICT_CSV_URLS) {
     try {
-      Zotero.log(`[ContextTranslate] Trying dictionary from ${url}`, "warning");
+      Zotero.log(`[ContextTranslate] Trying CSV: ${url}`, "warning");
       const r = await fetch(url);
-      if (r.ok) {
-        response = r;
-        break;
-      }
+      if (r.ok) { response = r; break; }
     } catch (err: any) {
-      lastError = err;
-      Zotero.log(`[ContextTranslate] Mirror failed: ${url} - ${err?.message}`, "warning");
+      Zotero.log(`[ContextTranslate] Failed: ${err?.message}`, "warning");
     }
   }
 
   if (!response) {
-    throw new Error(`所有下载地址均失败。您可以手动下载词典 JSON 文件放到 Zotero Profile 目录。\n${lastError?.message || ""}`);
+    throw new Error("CSV 下载失败，请检查网络。也可手动下载 ecdict.csv 并转换后放到 Zotero Profile 目录。");
   }
-  // Stream-read with progress reporting when Content-Length is known
-  const contentLength = Number(response.headers.get("Content-Length") ?? "0");
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error("Response body is not readable");
 
-  const chunks: Uint8Array[] = [];
-  let received = 0;
+  onProgress?.(5);
+  const csvText = await response.text();
+  onProgress?.(50);
 
-  while (true) {
-    const { done, value } = await (reader as any).read();
-    if (done) break;
-    if (value) {
-      chunks.push(value);
-      received += value.length;
-      if (onProgress && contentLength > 0) {
-        onProgress(Math.round((received / contentLength) * 100));
-      }
+  // Step 2: Parse CSV → JSON
+  const lines = csvText.split("\n");
+  const result: Record<string, { p: string; t: string; s: string }> = {};
+  let kept = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+
+    const cols = _parseCSVLine(line);
+    const word = cols[0]?.toLowerCase()?.trim();
+    const phonetic = cols[1] || "";
+    const translation = cols[3] || "";
+    const pos = cols[4] || "";
+    const bnc = parseInt(cols[8]) || 0;
+    const frq = parseInt(cols[9]) || 0;
+    const collins = parseInt(cols[5]) || 0;
+    const oxford = parseInt(cols[6]) || 0;
+    const tag = cols[7] || "";
+
+    if (!word || !translation || word.includes(" ") || !/^[a-z]/.test(word)) continue;
+
+    if (type === "light") {
+      if (!bnc && !frq && !collins && !oxford && !tag) continue;
     }
+
+    result[word] = { p: phonetic, t: translation, s: pos };
+    kept++;
+
+    if (i % 80000 === 0) onProgress?.(50 + Math.round((i / lines.length) * 40));
   }
 
-  // Merge chunks
-  const total = chunks.reduce((n, c) => n + c.length, 0);
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.length;
-  }
+  onProgress?.(92);
 
-  // Validate JSON before writing
-  const text = new TextDecoder().decode(merged);
-  JSON.parse(text); // throws if invalid
-
-  // Write to profile dir
+  // Step 3: Save JSON
+  const jsonStr = JSON.stringify(result);
   const profilePath = getProfileDictPath();
-  await IOUtils.write(profilePath, merged);
-  Zotero.log(
-    `[ContextTranslate] Dictionary saved to ${profilePath}`,
-    "warning",
-  );
+  await IOUtils.write(profilePath, new TextEncoder().encode(jsonStr));
+  Zotero.log(`[ContextTranslate] Dict saved: ${kept} entries`, "warning");
 
-  // Reload in-memory dictionary
+  // Step 4: Reload
   loadPromise = null;
   dictData = {};
   await loadDictionary();
+  onProgress?.(100);
+}
 
-  if (onProgress) onProgress(100);
+function _parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === "," && !inQ) { result.push(cur); cur = ""; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
 }
 
 export function lookupWord(word: string): DictEntry | null {

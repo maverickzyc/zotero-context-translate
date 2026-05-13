@@ -30,6 +30,7 @@ export function createPopup(
   level: ContextLevel,
 ): {
   container: HTMLElement;
+  dictArea: HTMLElement;
   contentArea: HTMLElement;
   actionsArea: HTMLElement;
 } {
@@ -126,11 +127,20 @@ export function createPopup(
 
   header.append(badge, title, pinBtn, closeBtn);
 
-  // ── Content ─────────────────────────────────────────────────────────────
+  // ── Dict area (instant dictionary result) ───────────────────────────────
+  const dictArea = el(mainDoc, "div");
+  Object.assign(dictArea.style, {
+    padding: "10px 14px",
+    borderBottom: "1px solid #313244",
+    display: "none",
+    flexShrink: "0",
+  });
+
+  // ── Content area (LLM streaming) ────────────────────────────────────────
   const contentArea = el(mainDoc, "div");
   Object.assign(contentArea.style, {
     padding: "12px 14px",
-    maxHeight: "300px",
+    maxHeight: "260px",
     overflowY: "auto",
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
@@ -148,11 +158,11 @@ export function createPopup(
     flexShrink: "0",
   });
 
-  container.append(header, contentArea, actionsArea);
+  container.append(header, dictArea, contentArea, actionsArea);
   attachDrag(mainDoc, header, container);
   mainDoc.documentElement!.appendChild(container);
 
-  return { container, contentArea, actionsArea };
+  return { container, dictArea, contentArea, actionsArea };
 }
 
 export function positionPopup(container: HTMLElement, screenX: number, screenY: number): void {
@@ -163,6 +173,43 @@ export function positionPopup(container: HTMLElement, screenX: number, screenY: 
   const vh = mainWin.innerHeight;
   container.style.left = `${Math.max(10, Math.min(left, vw - 450))}px`;
   container.style.top = `${Math.max(10, Math.min(top, vh - 200))}px`;
+}
+
+// ─── Dictionary display ───────────────────────────────────────────────────────
+
+export function showDictResult(
+  dictArea: HTMLElement,
+  word: string,
+  phonetic: string,
+  pos: string,
+  translation: string,
+): void {
+  const doc = dictArea.ownerDocument!;
+  dictArea.innerHTML = "";
+  dictArea.style.display = "block";
+
+  const wordEl = el(doc, "div");
+  Object.assign(wordEl.style, { fontSize: "16px", fontWeight: "700", color: "#cdd6f4" });
+  wordEl.textContent = word;
+
+  if (phonetic) {
+    const phoneticEl = el(doc, "span");
+    Object.assign(phoneticEl.style, { fontSize: "13px", color: "#6c7086", marginLeft: "8px", fontWeight: "400" });
+    phoneticEl.textContent = `/${phonetic}/`;
+    wordEl.appendChild(phoneticEl);
+  }
+
+  const transEl = el(doc, "div");
+  Object.assign(transEl.style, { fontSize: "13px", color: "#a6adc8", marginTop: "4px" });
+  if (pos) {
+    const posSpan = el(doc, "span");
+    Object.assign(posSpan.style, { color: "#818cf8", marginRight: "6px", fontSize: "12px" });
+    posSpan.textContent = pos;
+    transEl.appendChild(posSpan);
+  }
+  transEl.appendChild(doc.createTextNode(translation));
+
+  dictArea.append(wordEl, transEl);
 }
 
 // ─── Streaming ────────────────────────────────────────────────────────────────

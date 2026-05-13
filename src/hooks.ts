@@ -6,6 +6,7 @@ import {
   getCurrentPageNumber,
   getPageTextWithNeighbors,
 } from "./modules/context/text-extractor";
+import { loadDictionary, lookupPhrase } from "./modules/context/dictionary";
 import { resolveContext } from "./modules/context/context-resolver";
 import { clearAllCache } from "./modules/context/page-cache";
 import {
@@ -22,6 +23,7 @@ import {
   dismissIfNotPinned,
   isPinned,
   positionPopup,
+  showDictResult,
   appendStreamingCursor,
   appendChunk,
   removeCursor,
@@ -45,6 +47,9 @@ async function onStartup() {
   ]);
 
   initLocale();
+
+  // Load dictionary in background (non-blocking)
+  loadDictionary();
 
   // Register preferences pane
   Zotero.PreferencePanes.register({
@@ -235,9 +240,18 @@ async function handleTranslation(
   });
 
   // ── 6. Create popup in main window and position it ─────────────────────
-  const { container, contentArea, actionsArea } = createPopup(contextResult.level);
+  const { container, dictArea, contentArea, actionsArea } = createPopup(contextResult.level);
   positionPopup(container, screenX, screenY);
 
+  // Stage 1: Instant dictionary lookup (word-level only)
+  if (contextResult.level === ContextLevel.Word) {
+    const dictEntry = lookupPhrase(selectedText);
+    if (dictEntry) {
+      showDictResult(dictArea, selectedText, dictEntry.phonetic, dictEntry.pos, dictEntry.translation);
+    }
+  }
+
+  // Stage 2: LLM contextual analysis (streaming)
   const cursor = appendStreamingCursor(contentArea);
 
   // ── 8. Stream translation ──────────────────────────────────────────────

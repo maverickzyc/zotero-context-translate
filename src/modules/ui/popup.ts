@@ -1,87 +1,73 @@
 import { ContextLevel } from "../../types";
 
-const POPUP_ID = "ctx-translate-popup";
+const PANEL_ID = "ctx-translate-panel";
 
-const LEVEL_CONFIG: Record<
-  ContextLevel,
-  { color: string; label: string }
-> = {
+const LEVEL_CONFIG: Record<ContextLevel, { color: string; label: string }> = {
   [ContextLevel.Word]: { color: "#818cf8", label: "词汇" },
   [ContextLevel.Sentence]: { color: "#4ade80", label: "句子" },
   [ContextLevel.Paragraph]: { color: "#fb923c", label: "段落" },
 };
 
-// ─── Popup lifecycle ───────────────────────────────────────────────────────────
-
-/** Remove any existing popup from the document. */
-export function removePopup(doc: Document): void {
-  doc.getElementById(POPUP_ID)?.remove();
+export function removePopup(doc?: Document): void {
+  // Remove from main window
+  const mainWin = Zotero.getMainWindow();
+  const panel = mainWin?.document.getElementById(PANEL_ID);
+  if (panel) {
+    try { (panel as any).hidePopup?.(); } catch { /* ignore */ }
+    panel.remove();
+  }
+  // Also clean up from reader doc if passed
+  if (doc) {
+    doc.getElementById(PANEL_ID)?.remove();
+  }
 }
 
-/**
- * Create the floating translation popup.
- *
- * @returns `{ container, contentArea, actionsArea }` — callers use these
- *   references to stream content and attach action buttons.
- */
 export function createPopup(
-  doc: Document,
   level: ContextLevel,
 ): {
-  container: HTMLElement;
+  panel: XUL.Element;
   contentArea: HTMLElement;
   actionsArea: HTMLElement;
 } {
-  removePopup(doc);
+  const mainWin = Zotero.getMainWindow();
+  const mainDoc = mainWin.document;
+
+  removePopup();
 
   const cfg = LEVEL_CONFIG[level];
 
-  // ── inject blink keyframes once ──────────────────────────────────────────
-  if (!doc.getElementById("ctx-blink-style")) {
-    const style = doc.createElement("style");
-    style.id = "ctx-blink-style";
-    style.textContent = `
-      @keyframes ctx-blink {
-        0%, 100% { opacity: 1; }
-        50%       { opacity: 0; }
-      }
-    `;
-    (doc.head || doc.documentElement)!.appendChild(style);
-  }
-
-  // ── container ────────────────────────────────────────────────────────────
-  const container = doc.createElement("div");
-  container.id = POPUP_ID;
-  Object.assign(container.style, {
-    position: "fixed",
-    zIndex: "99999",
-    maxWidth: "420px",
-    minWidth: "220px",
+  // Create XUL panel in the main Zotero window
+  const panel = mainDoc.createXULElement("panel") as any;
+  panel.id = PANEL_ID;
+  panel.setAttribute("noautohide", "true");
+  panel.setAttribute("level", "floating");
+  panel.setAttribute("backdrag", "true");
+  Object.assign(panel.style, {
+    maxWidth: "440px",
+    minWidth: "240px",
     background: "#1e1e2e",
     color: "#cdd6f4",
     borderRadius: "10px",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+    border: "1px solid #313244",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
     fontFamily: "system-ui, -apple-system, sans-serif",
     fontSize: "14px",
     lineHeight: "1.6",
-    display: "flex",
-    flexDirection: "column",
     overflow: "hidden",
-    userSelect: "text",
+    padding: "0",
   });
 
-  // ── header / drag handle ─────────────────────────────────────────────────
-  const header = doc.createElement("div");
+  // Header
+  const header = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
   Object.assign(header.style, {
     display: "flex",
     alignItems: "center",
     padding: "8px 12px",
     background: "#181825",
     cursor: "grab",
-    flexShrink: "0",
   });
 
-  const badge = doc.createElement("span");
+  const badge = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
   Object.assign(badge.style, {
     display: "inline-block",
     padding: "2px 8px",
@@ -90,11 +76,10 @@ export function createPopup(
     color: "#1e1e2e",
     fontWeight: "700",
     fontSize: "12px",
-    letterSpacing: "0.03em",
   });
   badge.textContent = cfg.label;
 
-  const title = doc.createElement("span");
+  const title = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
   Object.assign(title.style, {
     marginLeft: "8px",
     fontSize: "12px",
@@ -103,9 +88,8 @@ export function createPopup(
   });
   title.textContent = "Context Translate";
 
-  const closeBtn = doc.createElement("span");
+  const closeBtn = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
   Object.assign(closeBtn.style, {
-    marginLeft: "auto",
     cursor: "pointer",
     fontSize: "16px",
     color: "#6c7086",
@@ -115,59 +99,66 @@ export function createPopup(
   closeBtn.textContent = "✕";
   closeBtn.addEventListener("mouseenter", () => { closeBtn.style.color = "#f38ba8"; });
   closeBtn.addEventListener("mouseleave", () => { closeBtn.style.color = "#6c7086"; });
-  closeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    removePopup(doc);
-  });
+  closeBtn.addEventListener("click", () => removePopup());
 
   header.appendChild(badge);
   header.appendChild(title);
   header.appendChild(closeBtn);
 
-  // ── content area ─────────────────────────────────────────────────────────
-  const contentArea = doc.createElement("div");
+  // Content area
+  const contentArea = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
   Object.assign(contentArea.style, {
     padding: "12px 14px",
     maxHeight: "300px",
     overflowY: "auto",
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
-    flexGrow: "1",
   });
 
-  // ── actions area ─────────────────────────────────────────────────────────
-  const actionsArea = doc.createElement("div");
+  // Actions area
+  const actionsArea = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
   Object.assign(actionsArea.style, {
     display: "flex",
     flexWrap: "wrap",
     gap: "6px",
     padding: "8px 12px",
     borderTop: "1px solid #313244",
-    flexShrink: "0",
   });
 
-  container.appendChild(header);
-  container.appendChild(contentArea);
-  container.appendChild(actionsArea);
+  panel.appendChild(header);
+  panel.appendChild(contentArea);
+  panel.appendChild(actionsArea);
 
-  // ── drag behaviour ────────────────────────────────────────────────────────
-  _attachDrag(doc, header, container);
+  // Add to main document's popupset (or body)
+  const popupset = mainDoc.getElementById("mainPopupSet")
+    || mainDoc.querySelector("popupset")
+    || mainDoc.documentElement;
+  popupset!.appendChild(panel);
 
-  return { container, contentArea, actionsArea };
+  return { panel, contentArea, actionsArea };
 }
 
-// ─── Streaming helpers ─────────────────────────────────────────────────────────
+export function openPopupAtScreen(
+  panel: XUL.Element,
+  screenX: number,
+  screenY: number,
+): void {
+  (panel as any).openPopupAtScreen(screenX, screenY, false);
+}
 
-/**
- * Append a blinking cursor element to `contentArea`.
- * Returns the cursor element so it can later be removed or used as an
- * insertion point.
- */
-export function appendStreamingCursor(
-  doc: Document,
-  contentArea: HTMLElement,
-): HTMLElement {
-  const cursor = doc.createElement("span");
+// ─── Streaming helpers ────────────────────────────────────────────────────────
+
+export function appendStreamingCursor(contentArea: HTMLElement): HTMLElement {
+  const doc = contentArea.ownerDocument!;
+
+  if (!doc.getElementById("ctx-blink-style")) {
+    const style = doc.createElementNS("http://www.w3.org/1999/xhtml", "style") as HTMLElement;
+    style.id = "ctx-blink-style";
+    style.textContent = `@keyframes ctx-blink { 0%,100%{opacity:1} 50%{opacity:0} }`;
+    (doc.head || doc.documentElement)!.appendChild(style);
+  }
+
+  const cursor = doc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
   Object.assign(cursor.style, {
     display: "inline-block",
     width: "2px",
@@ -181,42 +172,25 @@ export function appendStreamingCursor(
   return cursor;
 }
 
-/** Remove the streaming cursor once the stream is complete. */
 export function removeCursor(cursor: HTMLElement): void {
   cursor.remove();
 }
 
-/**
- * Insert a text chunk immediately before the streaming cursor.
- * This produces the "live typing" effect.
- */
-export function appendChunk(
-  contentArea: HTMLElement,
-  cursor: HTMLElement,
-  text: string,
-): void {
+export function appendChunk(contentArea: HTMLElement, cursor: HTMLElement, text: string): void {
   const textNode = contentArea.ownerDocument!.createTextNode(text);
   contentArea.insertBefore(textNode, cursor);
 }
 
-// ─── Action buttons ────────────────────────────────────────────────────────────
+// ─── Action buttons ───────────────────────────────────────────────────────────
 
-/**
- * Add an action button to the actions bar.
- *
- * @param label  Button label text.
- * @param onClick Callback invoked when the button is clicked.
- * @returns The created button element.
- */
 export function addAction(
-  doc: Document,
   actionsArea: HTMLElement,
   label: string,
   onClick: () => void,
-): HTMLButtonElement {
-  const btn = doc.createElement("button");
+): HTMLElement {
+  const doc = actionsArea.ownerDocument!;
+  const btn = doc.createElementNS("http://www.w3.org/1999/xhtml", "button") as HTMLElement;
   btn.textContent = label;
-
   Object.assign(btn.style, {
     padding: "4px 12px",
     borderRadius: "6px",
@@ -227,116 +201,9 @@ export function addAction(
     cursor: "pointer",
     transition: "background 0.15s",
   });
-
-  btn.addEventListener("mouseenter", () => {
-    btn.style.background = "#45475a";
-  });
-  btn.addEventListener("mouseleave", () => {
-    btn.style.background = "#313244";
-  });
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    onClick();
-  });
-
+  btn.addEventListener("mouseenter", () => { btn.style.background = "#45475a"; });
+  btn.addEventListener("mouseleave", () => { btn.style.background = "#313244"; });
+  btn.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
   actionsArea.appendChild(btn);
   return btn;
-}
-
-// ─── Positioning ───────────────────────────────────────────────────────────────
-
-/**
- * Position the popup near `(anchorX, anchorY)`, adjusting so it stays
- * fully inside the viewport.
- *
- * @param container The popup root element (must already be in the DOM so
- *   that `getBoundingClientRect` is available).
- * @param anchorX   X coordinate (client pixels) of the selection anchor.
- * @param anchorY   Y coordinate (client pixels) of the selection anchor.
- */
-export function positionPopup(
-  container: HTMLElement,
-  anchorX: number,
-  anchorY: number,
-): void {
-  const OFFSET = 10;
-  const doc = container.ownerDocument!;
-  const vw = doc.defaultView?.innerWidth ?? 800;
-  const vh = doc.defaultView?.innerHeight ?? 600;
-
-  // First pass: place below-right of anchor
-  container.style.left = `${anchorX + OFFSET}px`;
-  container.style.top = `${anchorY + OFFSET}px`;
-
-  // Measure after placement
-  const rect = container.getBoundingClientRect();
-  let left = anchorX + OFFSET;
-  let top = anchorY + OFFSET;
-
-  // Overflow right → shift left
-  if (left + rect.width > vw - OFFSET) {
-    left = Math.max(OFFSET, anchorX - rect.width - OFFSET);
-  }
-
-  // Overflow bottom → shift above anchor
-  if (top + rect.height > vh - OFFSET) {
-    top = Math.max(OFFSET, anchorY - rect.height - OFFSET);
-  }
-
-  container.style.left = `${left}px`;
-  container.style.top = `${top}px`;
-}
-
-// ─── Internal helpers ──────────────────────────────────────────────────────────
-
-function _attachDrag(
-  doc: Document,
-  handle: HTMLElement,
-  container: HTMLElement,
-): void {
-  let startX = 0;
-  let startY = 0;
-  let origLeft = 0;
-  let origTop = 0;
-  let overlay: HTMLElement | null = null;
-
-  handle.addEventListener("mousedown", (e: MouseEvent) => {
-    startX = e.clientX;
-    startY = e.clientY;
-    origLeft = parseFloat(container.style.left) || 0;
-    origTop = parseFloat(container.style.top) || 0;
-    handle.style.cursor = "grabbing";
-    e.preventDefault();
-
-    // Create a full-screen overlay to capture mouse events even over the PDF canvas
-    overlay = doc.createElement("div");
-    Object.assign(overlay.style, {
-      position: "fixed",
-      top: "0",
-      left: "0",
-      width: "100vw",
-      height: "100vh",
-      zIndex: "99998",
-      cursor: "grabbing",
-    });
-    (doc.body ?? doc.documentElement)!.appendChild(overlay);
-
-    overlay.addEventListener("mousemove", onMove);
-    overlay.addEventListener("mouseup", onUp);
-  });
-
-  function onMove(e: MouseEvent) {
-    container.style.left = `${origLeft + (e.clientX - startX)}px`;
-    container.style.top = `${origTop + (e.clientY - startY)}px`;
-  }
-
-  function onUp() {
-    handle.style.cursor = "grab";
-    if (overlay) {
-      overlay.removeEventListener("mousemove", onMove);
-      overlay.removeEventListener("mouseup", onUp);
-      overlay.remove();
-      overlay = null;
-    }
-  }
 }

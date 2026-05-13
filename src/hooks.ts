@@ -19,7 +19,7 @@ import { streamTranslation } from "./modules/translate/llm-service";
 import {
   createPopup,
   removePopup,
-  positionPopup,
+  openPopupAtScreen,
   appendStreamingCursor,
   appendChunk,
   removeCursor,
@@ -127,49 +127,25 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
 
     if (!selectionText) return;
 
-    // Auto-trigger translation
+    // Get screen coordinates for the popup position
     const anchor = doc.createElement("span");
     append(anchor);
 
     doc.defaultView?.setTimeout(() => {
       const rect = anchor.getBoundingClientRect();
-      handleTranslation(
-        reader,
-        doc,
-        rect.left || 200,
-        rect.bottom || 200,
-        selectionText,
-      );
-    }, 50);
+      // Convert iframe-local coords to screen coords
+      const iframeWin = doc.defaultView;
+      const screenX = (iframeWin?.mozInnerScreenX ?? 0) + rect.left;
+      const screenY = (iframeWin?.mozInnerScreenY ?? 0) + rect.bottom + 5;
 
-    // Auto-dismiss: listen on the main Zotero window for clicks outside the popup
-    const mainWin = (reader as any)._window || Zotero.getMainWindow();
-    if (mainWin) {
-      const onClickAway = (ev: Event) => {
-        const popup = doc.getElementById("ctx-translate-popup");
-        if (!popup) {
-          mainWin.removeEventListener("pointerdown", onClickAway, true);
-          return;
-        }
-        // If the click target is not inside the popup, dismiss it
-        const target = ev.target as Node;
-        if (!popup.contains(target)) {
-          removePopup(doc);
-          mainWin.removeEventListener("pointerdown", onClickAway, true);
-        }
-      };
-      // Use capture phase + delay to avoid dismissing on the initial selection click
-      mainWin.setTimeout(() => {
-        mainWin.addEventListener("pointerdown", onClickAway, true);
-      }, 300);
-    }
+      handleTranslation(reader, screenX, screenY, selectionText);
+    }, 50);
   };
 
 async function handleTranslation(
   reader: _ZoteroTypes.ReaderInstance,
-  doc: Document,
-  anchorX: number,
-  anchorY: number,
+  screenX: number,
+  screenY: number,
   fallbackText?: string | null,
 ) {
   try {
@@ -238,35 +214,11 @@ async function handleTranslation(
     targetLanguage,
   });
 
-  // ── 6. Create popup and position it ────────────────────────────────────
-  const { container, contentArea, actionsArea } = createPopup(
-    doc,
-    contextResult.level,
-  );
-  (doc.body ?? doc.documentElement)!.appendChild(container);
-  positionPopup(container, anchorX, anchorY);
+  // ── 6. Create XUL panel popup in main window ────────────────────────────
+  const { panel, contentArea, actionsArea } = createPopup(contextResult.level);
+  openPopupAtScreen(panel, screenX, screenY);
 
-  const cursor = appendStreamingCursor(doc, contentArea);
-
-  // ── 7. Dismiss handlers ────────────────────────────────────────────────
-  function onClickOutside(ev: MouseEvent) {
-    if (!container.contains(ev.target as Node)) {
-      removePopup(doc);
-      doc.removeEventListener("mousedown", onClickOutside);
-      doc.removeEventListener("keydown", onEscKey);
-    }
-  }
-
-  function onEscKey(ev: KeyboardEvent) {
-    if (ev.key === "Escape") {
-      removePopup(doc);
-      doc.removeEventListener("mousedown", onClickOutside);
-      doc.removeEventListener("keydown", onEscKey);
-    }
-  }
-
-  doc.addEventListener("mousedown", onClickOutside);
-  doc.addEventListener("keydown", onEscKey);
+  const cursor = appendStreamingCursor(contentArea);
 
   // ── 8. Stream translation ──────────────────────────────────────────────
   let fullText = "";
@@ -282,7 +234,7 @@ async function handleTranslation(
       removeCursor(cursor);
 
       // Copy button
-      addAction(doc, actionsArea, "\u{1F4CB} 复制", () => {
+      addAction(actionsArea, "\u{1F4CB} 复制", () => {
         try {
           const clipHelper = (Components.classes as any)[
             "@mozilla.org/widget/clipboardhelper;1"
@@ -297,7 +249,6 @@ async function handleTranslation(
       // Add to glossary button (only for word-level selections)
       if (contextResult.level === ContextLevel.Word) {
         addAction(
-          doc,
           actionsArea,
           "\u{1F4DA} 加入术语表",
           async () => {
@@ -316,9 +267,9 @@ async function handleTranslation(
       }
 
       // Retry button
-      addAction(doc, actionsArea, "\u{1F504} 重试", () => {
-        removePopup(doc);
-        handleTranslation(reader, doc, anchorX, anchorY);
+      addAction(actionsArea, "\u{1F504} 重试", () => {
+        removePopup();
+        handleTranslation(reader, screenX, screenY, selectedText);
       });
 
       // Save to history
@@ -343,9 +294,9 @@ async function handleTranslation(
       contentArea.style.color = "#f38ba8";
 
       // Retry button on error
-      addAction(doc, actionsArea, "\u{1F504} 重试", () => {
-        removePopup(doc);
-        handleTranslation(reader, doc, anchorX, anchorY);
+      addAction(actionsArea, "\u{1F504} 重试", () => {
+        removePopup();
+        handleTranslation(reader, screenX, screenY, selectedText);
       });
     },
   });
@@ -354,13 +305,12 @@ async function handleTranslation(
     const msg = err?.message || String(err) || "Unknown error";
     Zotero.log(`[ContextTranslate] Error: ${msg}`, "error");
     // Show error in a popup so user knows something went wrong
-    removePopup(doc);
-    const errPopup = createPopup(doc, ContextLevel.Word);
-    (doc.body ?? doc.documentElement)!.appendChild(errPopup.container);
-    positionPopup(errPopup.container, anchorX, anchorY);
+    removePopup();
+    const errPopup = createPopup(ContextLevel.Word);
+    openPopupAtScreen(errPopup.panel, screenX, screenY);
     errPopup.contentArea.textContent = `❌ 错误: ${msg}`;
     errPopup.contentArea.style.color = "#f38ba8";
-    addAction(doc, errPopup.actionsArea, "关闭", () => removePopup(doc));
+    addAction(errPopup.actionsArea, "关闭", () => removePopup());
   }
 }
 

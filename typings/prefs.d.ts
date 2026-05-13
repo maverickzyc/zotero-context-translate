@@ -12,8 +12,11 @@ declare namespace _ZoteroTypes {
       "llm.model": string;
       "llm.temperature": string;
       "llm.maxTokens": number;
+      "llm.presets": string;
+      "llm.activeIndex": number;
       "translate.sourceLanguage": string;
       "translate.targetLanguage": string;
+      "translate.triggerMode": string;
       "translate.autoMode": boolean;
       "enable": boolean;
     };

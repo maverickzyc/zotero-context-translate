@@ -157,7 +157,7 @@ export async function downloadDictionary(
   let received = 0;
 
   while (true) {
-    const { done, value } = await reader.read();
+    const { done, value } = await (reader as any).read();
     if (done) break;
     if (value) {
       chunks.push(value);

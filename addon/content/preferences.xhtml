@@ -3,35 +3,56 @@
      id="context-translate-prefs"
      onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })">
 
+  <!-- LLM Presets -->
   <groupbox>
-    <label><html:h2>LLM 设置</html:h2></label>
+    <label><html:h2>LLM 模型预设</html:h2></label>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="API Base URL" style="width: 120px;"/>
-      <html:input type="text" id="context-translate-llm-baseUrl" preference="llm.baseUrl" style="flex: 1;"/>
+    <vbox id="context-translate-presets-list" style="margin: 4px 0;">
+      <!-- Populated dynamically -->
+    </vbox>
+
+    <hbox style="margin: 8px 0;">
+      <button label="+ 添加预设"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('addPreset', { window })"/>
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="API Key" style="width: 120px;"/>
-      <html:input type="password" id="context-translate-llm-apiKey" preference="llm.apiKey" style="flex: 1;"/>
-    </hbox>
+    <separator/>
+    <label><html:h3>编辑预设</html:h3></label>
 
     <hbox align="center" style="margin: 4px 0;">
-      <label value="Model" style="width: 120px;"/>
-      <html:input type="text" id="context-translate-llm-model" preference="llm.model" style="flex: 1;"/>
+      <label value="名称" style="width: 100px;"/>
+      <html:input type="text" id="context-translate-preset-name" style="flex: 1;"/>
     </hbox>
-
     <hbox align="center" style="margin: 4px 0;">
-      <label value="Temperature" style="width: 120px;"/>
-      <html:input type="text" id="context-translate-llm-temperature" preference="llm.temperature" style="width: 80px;"/>
+      <label value="API Base URL" style="width: 100px;"/>
+      <html:input type="text" id="context-translate-preset-baseUrl" style="flex: 1;"/>
+    </hbox>
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="API Key" style="width: 100px;"/>
+      <html:input type="password" id="context-translate-preset-apiKey" style="flex: 1;"/>
+    </hbox>
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="Model" style="width: 100px;"/>
+      <html:input type="text" id="context-translate-preset-model" style="flex: 1;"/>
+    </hbox>
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="Temperature" style="width: 100px;"/>
+      <html:input type="text" id="context-translate-preset-temperature" style="width: 80px;"/>
+    </hbox>
+    <hbox style="margin: 4px 0;">
+      <button label="保存预设"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('savePreset', { window })"/>
+      <button label="删除预设"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('deletePreset', { window })"/>
     </hbox>
   </groupbox>
 
+  <!-- Translation Settings -->
   <groupbox>
     <label><html:h2>翻译设置</html:h2></label>
 
     <hbox align="center" style="margin: 4px 0;">
-      <label value="目标语言" style="width: 120px;"/>
+      <label value="目标语言" style="width: 100px;"/>
       <menulist id="context-translate-targetLanguage" preference="translate.targetLanguage">
         <menupopup>
           <menuitem label="中文（简体）" value="zh-CN"/>
@@ -42,9 +63,36 @@
       </menulist>
     </hbox>
 
-    <checkbox id="context-translate-autoMode" preference="translate.autoMode" label="选中文本自动翻译"/>
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="触发方式" style="width: 100px;"/>
+      <menulist id="context-translate-triggerMode" preference="translate.triggerMode">
+        <menupopup>
+          <menuitem label="选中自动翻译" value="auto"/>
+          <menuitem label="右键菜单翻译" value="contextmenu"/>
+        </menupopup>
+      </menulist>
+    </hbox>
   </groupbox>
 
+  <!-- Dictionary -->
+  <groupbox>
+    <label><html:h2>词典管理</html:h2></label>
+
+    <hbox align="center">
+      <label id="context-translate-dict-status" value="检查中..."/>
+    </hbox>
+
+    <hbox style="margin: 8px 0;">
+      <button id="context-translate-dict-download-light" label="下载轻量版 (~4MB, 5万词)"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', { window, type: 'light' })"/>
+      <button id="context-translate-dict-download-full" label="下载完整版 (~30MB, 77万词)"
+              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', { window, type: 'full' })"/>
+    </hbox>
+
+    <label id="context-translate-dict-progress" value="" style="color: #888;"/>
+  </groupbox>
+
+  <!-- Glossary -->
   <groupbox>
     <label><html:h2>术语表</html:h2></label>
 

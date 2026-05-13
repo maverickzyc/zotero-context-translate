@@ -10,6 +10,7 @@ pref("llm.activeIndex", 0);
 // Translation settings
 pref("translate.sourceLanguage", "auto");
 pref("translate.targetLanguage", "zh-CN");
+pref("translate.triggerMode", "auto");
 pref("translate.autoMode", false);
 
 // Feature toggles

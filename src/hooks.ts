@@ -9,6 +9,8 @@ import {
 import { loadDictionary, lookupPhrase } from "./modules/context/dictionary";
 import { resolveContext } from "./modules/context/context-resolver";
 import { clearAllCache } from "./modules/context/page-cache";
+import { getCached, setCache, clearAllTranslateCache } from "./modules/context/translate-cache";
+import { getPresets, setActiveIndex, getActivePresetName } from "./modules/translate/llm-service";
 import {
   matchGlossaryTerms,
   loadGlossary,
@@ -34,6 +36,10 @@ import {
   onPrefsLoad,
   onImportGlossary,
   onExportGlossary,
+  onAddPreset,
+  onSavePreset,
+  onDeletePreset,
+  onDownloadDict,
 } from "./modules/ui/preferences";
 import { ContextLevel, GlossaryEntry } from "./types";
 
@@ -59,10 +65,17 @@ async function onStartup() {
     image: rootURI + "content/icons/favicon.png",
   });
 
-  // Register Reader text-selection event listener
+  // Register Reader event listeners
   Zotero.Reader.registerEventListener(
     "renderTextSelectionPopup",
     onTextSelectionPopup,
+    config.addonID,
+  );
+
+  // Register right-click context menu for "contextmenu" trigger mode
+  Zotero.Reader.registerEventListener(
+    "createAnnotationContextMenu",
+    onAnnotationContextMenu,
     config.addonID,
   );
 
@@ -88,8 +101,8 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 function onShutdown(): void {
   ztoolkit.unregisterAll();
 
-  // Clear all page caches
   clearAllCache();
+  clearAllTranslateCache();
 
   // Unregister Reader event listener
   Zotero.Reader.unregisterEventListener(
@@ -109,6 +122,18 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
     case "load":
       await onPrefsLoad(data.window);
       break;
+    case "addPreset":
+      onAddPreset(data.window);
+      break;
+    case "savePreset":
+      onSavePreset(data.window);
+      break;
+    case "deletePreset":
+      onDeletePreset(data.window);
+      break;
+    case "downloadDict":
+      await onDownloadDict(data.window, data.type);
+      break;
     case "importGlossary":
       await onImportGlossary(data.window);
       break;
@@ -122,11 +147,17 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
 
 // ─── Reader text selection handler ───────────────────────────────────────────
 
+// Store last selection info for contextmenu trigger mode
+let lastSelection: { reader: any; screenX: number; screenY: number; text: string } | null = null;
+
+function getTriggerMode(): string {
+  return (Zotero.Prefs.get(`${config.prefsPrefix}.translate.triggerMode`, true) as string) || "auto";
+}
+
 const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectionPopup"> =
   (event) => {
     const { reader, doc, params, append } = event;
 
-    // Get selected text from event params (most reliable in Zotero 9)
     const p = params as any;
     const selectionText = (typeof p?.annotation?.text === "string" && p.annotation.text.trim())
       ? p.annotation.text.trim()
@@ -134,7 +165,7 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
 
     if (!selectionText) return;
 
-    // Get screen coordinates for the popup position
+    // Capture position for both modes
     const anchor = doc.createElement("span");
     append(anchor);
 
@@ -144,28 +175,57 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
       const screenX = (iframeWin?.mozInnerScreenX ?? 0) + rect.left;
       const screenY = (iframeWin?.mozInnerScreenY ?? 0) + rect.bottom + 5;
 
-      handleTranslation(reader, screenX, screenY, selectionText);
-    }, 50);
+      // Store for contextmenu mode
+      lastSelection = { reader, screenX, screenY, text: selectionText };
 
-    // Auto-dismiss: click anywhere outside the popup closes it (unless pinned)
-    const mainWin = Zotero.getMainWindow();
-    const onClickOutside = (ev: Event) => {
-      if (isPinned()) return;
-      const popup = mainWin.document.getElementById("ctx-translate-popup");
-      if (!popup) {
-        mainWin.removeEventListener("mousedown", onClickOutside, true);
-        return;
+      // Auto mode: trigger immediately
+      if (getTriggerMode() === "auto") {
+        handleTranslation(reader, screenX, screenY, selectionText);
+        setupDismissListener();
       }
-      if (!popup.contains(ev.target as Node)) {
-        dismissIfNotPinned();
-        mainWin.removeEventListener("mousedown", onClickOutside, true);
-      }
-    };
-    // Delay to avoid triggering on the initial selection click
-    mainWin.setTimeout(() => {
-      mainWin.addEventListener("mousedown", onClickOutside, true);
-    }, 500);
+    }, 50);
   };
+
+const onAnnotationContextMenu: _ZoteroTypes.Reader.EventHandler<"createAnnotationContextMenu"> =
+  (event) => {
+    const { append } = event as any;
+    if (typeof append !== "function") return;
+
+    const menuItem = {
+      label: "📖 上下文翻译",
+      onCommand: () => {
+        if (lastSelection) {
+          handleTranslation(
+            lastSelection.reader,
+            lastSelection.screenX,
+            lastSelection.screenY,
+            lastSelection.text,
+          );
+          setupDismissListener();
+        }
+      },
+    };
+    append(menuItem);
+  };
+
+function setupDismissListener() {
+  const mainWin = Zotero.getMainWindow();
+  const onClickOutside = (ev: Event) => {
+    if (isPinned()) return;
+    const popup = mainWin.document.getElementById("ctx-translate-popup");
+    if (!popup) {
+      mainWin.removeEventListener("mousedown", onClickOutside, true);
+      return;
+    }
+    if (!popup.contains(ev.target as Node)) {
+      dismissIfNotPinned();
+      mainWin.removeEventListener("mousedown", onClickOutside, true);
+    }
+  };
+  mainWin.setTimeout(() => {
+    mainWin.addEventListener("mousedown", onClickOutside, true);
+  }, 500);
+}
 
 async function handleTranslation(
   reader: _ZoteroTypes.ReaderInstance,
@@ -189,8 +249,58 @@ async function handleTranslation(
     itemID = (reader as any).itemID || (reader as any)._itemID;
   }
   if (!itemID) {
-    Zotero.log("[ContextTranslate] Cannot determine item ID", "warning");
     itemID = 0;
+  }
+
+  // ── 1b. Check translation cache ───────────────────────────────────────
+  const cached = getCached(itemID, pageNumber, selectedText);
+  if (cached) {
+    // Show cached result instantly
+    const { container, dictArea, contentArea, analysisArea, actionsArea } = createPopup(cached.level);
+    positionPopup(container, screenX, screenY);
+
+    // Show dict result if cached
+    if (cached.dictResult) {
+      showDictResult(dictArea, selectedText, cached.dictResult.phonetic, cached.dictResult.pos, cached.dictResult.translation);
+    }
+
+    // Show cached LLM result, split by --- for sentence/paragraph
+    if (cached.level !== ContextLevel.Word && cached.llmResult.includes("---")) {
+      const [translation, analysis] = cached.llmResult.split("---").map(s => s.trim());
+      contentArea.textContent = translation;
+      if (analysis) {
+        analysisArea.style.display = "block";
+        analysisArea.textContent = analysis;
+      }
+    } else {
+      contentArea.textContent = cached.llmResult;
+    }
+
+    // Show "缓存" badge in header
+    const badge = container.querySelector("span");
+    if (badge) {
+      const cacheBadge = badge.ownerDocument!.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
+      Object.assign(cacheBadge.style, { fontSize: "10px", color: "#6c7086", marginLeft: "8px" });
+      cacheBadge.textContent = "缓存";
+      badge.parentElement?.insertBefore(cacheBadge, badge.nextSibling?.nextSibling || null);
+    }
+
+    addAction(actionsArea, "📋 复制", () => {
+      try {
+        const clipHelper = (Components.classes as any)["@mozilla.org/widget/clipboardhelper;1"]
+          .getService(Components.interfaces.nsIClipboardHelper);
+        clipHelper.copyString(cached.llmResult);
+      } catch { navigator.clipboard?.writeText(cached.llmResult); }
+    });
+
+    addAction(actionsArea, "🔄 重新翻译", () => {
+      removePopup();
+      // Force bypass cache by clearing this entry
+      setCache(itemID!, pageNumber, selectedText, { ...cached, timestamp: 0 });
+      handleTranslation(reader, screenX, screenY, selectedText);
+    });
+
+    return;
   }
 
   // ── 2. Extract page text with neighboring paragraphs ───────────────────
@@ -409,6 +519,15 @@ async function handleTranslation(
         } catch {
           contentArea.textContent = "读取历史记录失败";
         }
+      });
+
+      // Save to cache
+      const dictEntry = hasDictResult ? lookupPhrase(selectedText) : null;
+      setCache(itemID!, pageNumber, selectedText, {
+        level: contextResult.level,
+        dictResult: dictEntry,
+        llmResult: fullText,
+        timestamp: Date.now(),
       });
 
       // Save to history

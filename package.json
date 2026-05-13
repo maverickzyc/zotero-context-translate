@@ -1,8 +1,8 @@
 {
-  "name": "zotero-plugin-template",
+  "name": "zotero-context-translate",
   "type": "module",
-  "version": "3.1.0",
-  "description": "Zotero Plugin Template",
+  "version": "0.0.1",
+  "description": "Context-aware translation plugin for Zotero with LLM support",
   "config": {
     "addonName": "Zotero Context Translate",
     "addonID": "context-translate@zotero.org",

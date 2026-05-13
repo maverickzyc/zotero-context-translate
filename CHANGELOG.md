@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.1.0] - 2026-05-13
+## [0.0.1] - 2026-05-14
 
 ### Added
 - **Context Engine**: PDF text layer extraction with paragraph detection, multi-column support, sentence boundary detection (handles academic abbreviations like "et al.", "Fig.", "e.g.")

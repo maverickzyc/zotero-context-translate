@@ -294,32 +294,49 @@ function _attachDrag(
   handle: HTMLElement,
   container: HTMLElement,
 ): void {
-  let dragging = false;
   let startX = 0;
   let startY = 0;
   let origLeft = 0;
   let origTop = 0;
+  let overlay: HTMLElement | null = null;
 
   handle.addEventListener("mousedown", (e: MouseEvent) => {
-    dragging = true;
     startX = e.clientX;
     startY = e.clientY;
     origLeft = parseFloat(container.style.left) || 0;
     origTop = parseFloat(container.style.top) || 0;
     handle.style.cursor = "grabbing";
     e.preventDefault();
+
+    // Create a full-screen overlay to capture mouse events even over the PDF canvas
+    overlay = doc.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100vw",
+      height: "100vh",
+      zIndex: "99998",
+      cursor: "grabbing",
+    });
+    (doc.body ?? doc.documentElement)!.appendChild(overlay);
+
+    overlay.addEventListener("mousemove", onMove);
+    overlay.addEventListener("mouseup", onUp);
   });
 
-  doc.addEventListener("mousemove", (e: MouseEvent) => {
-    if (!dragging) return;
+  function onMove(e: MouseEvent) {
     container.style.left = `${origLeft + (e.clientX - startX)}px`;
     container.style.top = `${origTop + (e.clientY - startY)}px`;
-  });
+  }
 
-  doc.addEventListener("mouseup", () => {
-    if (dragging) {
-      dragging = false;
-      handle.style.cursor = "grab";
+  function onUp() {
+    handle.style.cursor = "grab";
+    if (overlay) {
+      overlay.removeEventListener("mousemove", onMove);
+      overlay.removeEventListener("mouseup", onUp);
+      overlay.remove();
+      overlay = null;
     }
-  });
+  }
 }

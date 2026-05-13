@@ -142,15 +142,27 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
       );
     }, 50);
 
-    // Auto-dismiss: when selection changes or clears, remove popup
-    const onSelectionChange = () => {
-      const currentSelection = doc.getSelection()?.toString()?.trim();
-      if (!currentSelection) {
-        removePopup(doc);
-        doc.removeEventListener("selectionchange", onSelectionChange);
-      }
-    };
-    doc.addEventListener("selectionchange", onSelectionChange);
+    // Auto-dismiss: listen on the main Zotero window for clicks outside the popup
+    const mainWin = (reader as any)._window || Zotero.getMainWindow();
+    if (mainWin) {
+      const onClickAway = (ev: Event) => {
+        const popup = doc.getElementById("ctx-translate-popup");
+        if (!popup) {
+          mainWin.removeEventListener("pointerdown", onClickAway, true);
+          return;
+        }
+        // If the click target is not inside the popup, dismiss it
+        const target = ev.target as Node;
+        if (!popup.contains(target)) {
+          removePopup(doc);
+          mainWin.removeEventListener("pointerdown", onClickAway, true);
+        }
+      };
+      // Use capture phase + delay to avoid dismissing on the initial selection click
+      mainWin.setTimeout(() => {
+        mainWin.addEventListener("pointerdown", onClickAway, true);
+      }, 300);
+    }
   };
 
 async function handleTranslation(

@@ -1,97 +1,59 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html>
-<html xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-      xmlns:html="http://www.w3.org/1999/xhtml"
-      onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })">
-  <linkset>
-    <html:link rel="localization" href="context-translate-preferences.ftl" />
-  </linkset>
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+     xmlns:html="http://www.w3.org/1999/xhtml"
+     id="context-translate-prefs"
+     onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })">
 
-  <!-- LLM Settings -->
   <groupbox>
-    <label><html:h2 data-l10n-id="context-translate-prefs-llm-title"></html:h2></label>
+    <label><html:h2>LLM 设置</html:h2></label>
 
-    <hbox align="center">
-      <label data-l10n-id="context-translate-prefs-llm-baseUrl" control="context-translate-llm-baseUrl" />
-      <html:input
-        type="text"
-        id="context-translate-llm-baseUrl"
-        preference="llm.baseUrl"
-        flex="1"
-      />
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="API Base URL" style="width: 120px;"/>
+      <html:input type="text" id="context-translate-llm-baseUrl" preference="llm.baseUrl" style="flex: 1;"/>
     </hbox>
 
-    <hbox align="center">
-      <label data-l10n-id="context-translate-prefs-llm-apiKey" control="context-translate-llm-apiKey" />
-      <html:input
-        type="password"
-        id="context-translate-llm-apiKey"
-        preference="llm.apiKey"
-        flex="1"
-      />
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="API Key" style="width: 120px;"/>
+      <html:input type="password" id="context-translate-llm-apiKey" preference="llm.apiKey" style="flex: 1;"/>
     </hbox>
 
-    <hbox align="center">
-      <label data-l10n-id="context-translate-prefs-llm-model" control="context-translate-llm-model" />
-      <html:input
-        type="text"
-        id="context-translate-llm-model"
-        preference="llm.model"
-        flex="1"
-      />
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="Model" style="width: 120px;"/>
+      <html:input type="text" id="context-translate-llm-model" preference="llm.model" style="flex: 1;"/>
     </hbox>
 
-    <hbox align="center">
-      <label data-l10n-id="context-translate-prefs-llm-temperature" control="context-translate-llm-temperature" />
-      <html:input
-        type="text"
-        id="context-translate-llm-temperature"
-        preference="llm.temperature"
-        flex="1"
-      />
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="Temperature" style="width: 120px;"/>
+      <html:input type="text" id="context-translate-llm-temperature" preference="llm.temperature" style="width: 80px;"/>
     </hbox>
   </groupbox>
 
-  <!-- Translation Settings -->
   <groupbox>
-    <label><html:h2 data-l10n-id="context-translate-prefs-translate-title"></html:h2></label>
+    <label><html:h2>翻译设置</html:h2></label>
 
-    <hbox align="center">
-      <label data-l10n-id="context-translate-prefs-translate-targetLanguage" control="context-translate-translate-targetLanguage" />
-      <menulist id="context-translate-translate-targetLanguage" preference="translate.targetLanguage">
+    <hbox align="center" style="margin: 4px 0;">
+      <label value="目标语言" style="width: 120px;"/>
+      <menulist id="context-translate-targetLanguage" preference="translate.targetLanguage">
         <menupopup>
-          <menuitem value="zh-CN" data-l10n-id="context-translate-prefs-translate-lang-zh-CN" />
-          <menuitem value="zh-TW" data-l10n-id="context-translate-prefs-translate-lang-zh-TW" />
-          <menuitem value="en" data-l10n-id="context-translate-prefs-translate-lang-en" />
-          <menuitem value="ja" data-l10n-id="context-translate-prefs-translate-lang-ja" />
+          <menuitem label="中文（简体）" value="zh-CN"/>
+          <menuitem label="中文（繁體）" value="zh-TW"/>
+          <menuitem label="English" value="en"/>
+          <menuitem label="日本語" value="ja"/>
         </menupopup>
       </menulist>
     </hbox>
 
-    <checkbox
-      id="context-translate-translate-autoMode"
-      preference="translate.autoMode"
-      data-l10n-id="context-translate-prefs-translate-autoMode"
-    />
+    <checkbox id="context-translate-autoMode" preference="translate.autoMode" label="选中文本自动翻译"/>
   </groupbox>
 
-  <!-- Glossary -->
   <groupbox>
-    <label><html:h2 data-l10n-id="context-translate-prefs-glossary-title"></html:h2></label>
+    <label><html:h2>术语表</html:h2></label>
 
     <hbox align="center">
-      <label id="context-translate-glossary-count" />
-    </hbox>
-
-    <hbox>
-      <button
-        data-l10n-id="context-translate-prefs-glossary-import"
-        oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('importGlossary', { window })"
-      />
-      <button
-        data-l10n-id="context-translate-prefs-glossary-export"
-        oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('exportGlossary', { window })"
-      />
+      <label id="context-translate-glossary-count" value="术语数: 0 条"/>
+      <spacer flex="1"/>
+      <button label="导入 CSV" oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('importGlossary', { window })"/>
+      <button label="导出 CSV" oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('exportGlossary', { window })"/>
     </hbox>
   </groupbox>
-</html>
+
+</vbox>

@@ -103,8 +103,26 @@ export function createPopup(
   });
   title.textContent = "Context Translate";
 
+  const closeBtn = doc.createElement("span");
+  Object.assign(closeBtn.style, {
+    marginLeft: "auto",
+    cursor: "pointer",
+    fontSize: "16px",
+    color: "#6c7086",
+    padding: "0 4px",
+    lineHeight: "1",
+  });
+  closeBtn.textContent = "✕";
+  closeBtn.addEventListener("mouseenter", () => { closeBtn.style.color = "#f38ba8"; });
+  closeBtn.addEventListener("mouseleave", () => { closeBtn.style.color = "#6c7086"; });
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    removePopup(doc);
+  });
+
   header.appendChild(badge);
   header.appendChild(title);
+  header.appendChild(closeBtn);
 
   // ── content area ─────────────────────────────────────────────────────────
   const contentArea = doc.createElement("div");

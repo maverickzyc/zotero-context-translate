@@ -45,6 +45,14 @@ async function onStartup() {
 
   initLocale();
 
+  // Register preferences pane
+  Zotero.PreferencePanes.register({
+    pluginID: config.addonID,
+    src: rootURI + "content/preferences.xhtml",
+    label: "Context Translate",
+    image: rootURI + "content/icons/favicon.png",
+  });
+
   // Register Reader text-selection event listener
   Zotero.Reader.registerEventListener(
     "renderTextSelectionPopup",
@@ -110,27 +118,43 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
 
 const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectionPopup"> =
   (event) => {
-    const { reader, doc, append } = event;
+    const { reader, doc, params, append } = event;
 
-    // Inject translate button into the selection popup
-    const btn = doc.createElement("button");
-    btn.textContent = "\u{1F4D6} 上下文翻译";
-    btn.style.cssText =
-      "background: #818cf8; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin: 2px 4px;";
+    // Capture selected text from params or selection API
+    const paramsAnnotation = (params as any)?.annotation;
+    const selectionText = paramsAnnotation?.text
+      || doc.getSelection()?.toString()
+      || null;
 
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      // Use mouse event coordinates for positioning if available, otherwise fallback
-      const mouseEvent = e as MouseEvent;
+    if (!selectionText) return;
+
+    // Auto-trigger translation immediately
+    // Use a small container to get position info from the selection popup
+    const anchor = doc.createElement("span");
+    append(anchor);
+
+    // Get position from the appended element's location in the popup
+    // Short delay to let the popup render so we can measure position
+    doc.defaultView?.setTimeout(() => {
+      const rect = anchor.getBoundingClientRect();
       handleTranslation(
         reader,
         doc,
-        mouseEvent.clientX || 200,
-        mouseEvent.clientY || 200,
+        rect.left || 200,
+        rect.bottom || 200,
+        selectionText,
       );
-    });
+    }, 50);
 
-    append(btn);
+    // Auto-dismiss: when selection changes or clears, remove popup
+    const onSelectionChange = () => {
+      const currentSelection = doc.getSelection()?.toString()?.trim();
+      if (!currentSelection) {
+        removePopup(doc);
+        doc.removeEventListener("selectionchange", onSelectionChange);
+      }
+    };
+    doc.addEventListener("selectionchange", onSelectionChange);
   };
 
 async function handleTranslation(
@@ -138,18 +162,31 @@ async function handleTranslation(
   doc: Document,
   anchorX: number,
   anchorY: number,
+  fallbackText?: string | null,
 ) {
+  try {
   // ── 1. Gather selected text ────────────────────────────────────────────
-  const selectedText = getSelectedText(reader);
-  if (!selectedText) return;
+  const selectedText = getSelectedText(reader) || fallbackText;
+  if (!selectedText) {
+    Zotero.log("[ContextTranslate] No selected text found", "warning");
+    return;
+  }
+  Zotero.log(`[ContextTranslate] Selected: "${selectedText.substring(0, 50)}..."`, "warning");
 
-  const pageNumber = getCurrentPageNumber(reader);
-  if (pageNumber === null) return;
+  const pageNumber = getCurrentPageNumber(reader) || 1;
 
-  const itemID =
+  let itemID: number | undefined;
+  try {
     // @ts-expect-error - Zotero_Tabs is a global in the main window
-    Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)?.itemID;
-  if (!itemID) return;
+    itemID = Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)?.itemID;
+  } catch {
+    // Fallback: try to get from reader directly
+    itemID = (reader as any).itemID || (reader as any)._itemID;
+  }
+  if (!itemID) {
+    Zotero.log("[ContextTranslate] Cannot determine item ID", "warning");
+    itemID = 0;
+  }
 
   // ── 2. Extract page text with neighboring paragraphs ───────────────────
   let pageData;
@@ -297,7 +334,8 @@ async function handleTranslation(
 
     onError(error: Error) {
       removeCursor(cursor);
-      contentArea.textContent = `❌ 翻译出错: ${error.message}`;
+      const msg = error?.message || String(error) || "Unknown error";
+      contentArea.textContent = `❌ 翻译出错: ${msg}`;
       contentArea.style.color = "#f38ba8";
 
       // Retry button on error
@@ -307,6 +345,19 @@ async function handleTranslation(
       });
     },
   });
+
+  } catch (err: any) {
+    const msg = err?.message || String(err) || "Unknown error";
+    Zotero.log(`[ContextTranslate] Error: ${msg}`, "error");
+    // Show error in a popup so user knows something went wrong
+    removePopup(doc);
+    const errPopup = createPopup(doc, ContextLevel.Word);
+    (doc.body ?? doc.documentElement)!.appendChild(errPopup.container);
+    positionPopup(errPopup.container, anchorX, anchorY);
+    errPopup.contentArea.textContent = `❌ 错误: ${msg}`;
+    errPopup.contentArea.style.color = "#f38ba8";
+    addAction(doc, errPopup.actionsArea, "关闭", () => removePopup(doc));
+  }
 }
 
 // ─── Export ──────────────────────────────────────────────────────────────────

@@ -16,12 +16,14 @@ export class SSEParser {
   private callbacks: TranslationCallbacks;
   private buffer = "";
   private accumulated = "";
+  private finished = false;
 
   constructor(callbacks: TranslationCallbacks) {
     this.callbacks = callbacks;
   }
 
   feed(chunk: string): void {
+    if (this.finished) return;
     this.buffer += chunk;
     const parts = this.buffer.split("\n");
     this.buffer = parts.pop() || "";
@@ -30,6 +32,7 @@ export class SSEParser {
       if (!line) continue;
       const content = parseSSEChunk(line);
       if (content === null) {
+        this.finished = true;
         this.callbacks.onDone(this.accumulated);
         return;
       }
@@ -41,11 +44,11 @@ export class SSEParser {
   }
 
   finish(): void {
+    if (this.finished) return;
+    this.finished = true;
     if (this.buffer.trim()) {
       const content = parseSSEChunk(this.buffer.trim());
-      if (content === null) {
-        this.callbacks.onDone(this.accumulated);
-      } else if (content) {
+      if (content && content !== null) {
         this.accumulated += content;
         this.callbacks.onChunk(content);
       }

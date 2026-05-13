@@ -142,21 +142,23 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
       handleTranslation(reader, screenX, screenY, selectionText);
     }, 50);
 
-    // Auto-dismiss: poll for selection clearing (works across iframes)
-    const dismissTimer = doc.defaultView?.setInterval(() => {
+    // Auto-dismiss: click anywhere outside the popup closes it (unless pinned)
+    const mainWin = Zotero.getMainWindow();
+    const onClickOutside = (ev: Event) => {
       if (isPinned()) return;
-      const mainDoc = Zotero.getMainWindow()?.document;
-      if (!mainDoc?.getElementById("ctx-translate-popup")) {
-        doc.defaultView?.clearInterval(dismissTimer);
+      const popup = mainWin.document.getElementById("ctx-translate-popup");
+      if (!popup) {
+        mainWin.removeEventListener("mousedown", onClickOutside, true);
         return;
       }
-      // Check if text is still selected in the reader
-      const p2 = params as any;
-      const stillSelected = doc.getSelection()?.toString()?.trim();
-      if (!stillSelected) {
+      if (!popup.contains(ev.target as Node)) {
         dismissIfNotPinned();
-        doc.defaultView?.clearInterval(dismissTimer);
+        mainWin.removeEventListener("mousedown", onClickOutside, true);
       }
+    };
+    // Delay to avoid triggering on the initial selection click
+    mainWin.setTimeout(() => {
+      mainWin.addEventListener("mousedown", onClickOutside, true);
     }, 500);
   };
 

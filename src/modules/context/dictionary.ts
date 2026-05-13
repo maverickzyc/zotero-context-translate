@@ -13,10 +13,37 @@ export async function loadDictionary(): Promise<void> {
 
   loadPromise = (async () => {
     try {
-      const dictPath = `${rootURI}dict/ecdict-subset.json`;
-      const response = await fetch(dictPath);
-      if (!response.ok) throw new Error(`Dict fetch failed: ${response.status}`);
-      const raw = await response.text();
+      // Try multiple loading strategies
+      const dictUrl = `${rootURI}dict/ecdict-subset.json`;
+      Zotero.log(`[ContextTranslate] Loading dictionary from: ${dictUrl}`, "warning");
+
+      let raw: string | null = null;
+
+      // Strategy 1: Zotero.File.getContentsFromURL (works for chrome:// URIs)
+      try {
+        raw = Zotero.File.getContentsFromURL(dictUrl) as string;
+      } catch { /* fallback */ }
+
+      // Strategy 2: fetch
+      if (!raw) {
+        try {
+          const response = await fetch(dictUrl);
+          if (response.ok) raw = await response.text();
+        } catch { /* fallback */ }
+      }
+
+      // Strategy 3: IOUtils for file path
+      if (!raw) {
+        try {
+          const addonDir = rootURI.replace(/^file:\/\//, "").replace(/\/$/, "");
+          const filePath = `${addonDir}/dict/ecdict-subset.json`;
+          const bytes = await IOUtils.read(filePath);
+          raw = new TextDecoder().decode(bytes);
+        } catch { /* fallback */ }
+      }
+
+      if (!raw) throw new Error("All loading strategies failed");
+
       dictData = JSON.parse(raw);
       Zotero.log(`[ContextTranslate] Dictionary loaded: ${Object.keys(dictData!).length} entries`, "warning");
     } catch (err: any) {
@@ -30,11 +57,9 @@ export async function loadDictionary(): Promise<void> {
 
 export function lookupWord(word: string): DictEntry | null {
   if (!dictData) return null;
-
   const key = word.toLowerCase().trim();
   const entry = dictData[key];
   if (!entry) return null;
-
   return {
     phonetic: entry.p || "",
     translation: entry.t || "",
@@ -44,16 +69,11 @@ export function lookupWord(word: string): DictEntry | null {
 
 export function lookupPhrase(text: string): DictEntry | null {
   if (!dictData) return null;
-
-  // Try exact match first
   const exact = lookupWord(text);
   if (exact) return exact;
-
-  // For multi-word selections, try the first word
   const words = text.trim().split(/\s+/);
   if (words.length > 1 && words.length <= 3) {
     return lookupWord(words[0]);
   }
-
   return null;
 }

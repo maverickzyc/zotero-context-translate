@@ -231,23 +231,32 @@ async function handleTranslation(
       true,
     ) as string) || "中文";
 
-  const messages = buildPrompt({
-    level: contextResult.level,
-    selected: contextResult.selected,
-    context: contextResult.context,
-    glossaryEntries,
-    targetLanguage,
-  });
+  // hasDictResult will be set after dict lookup below
+  let hasDictResult = false;
+
+  // ── Build prompt (placeholder, will finalize after dict lookup) ────────
+  function buildMessages() {
+    return buildPrompt({
+      level: contextResult.level,
+      selected: contextResult.selected,
+      context: contextResult.context,
+      glossaryEntries,
+      targetLanguage,
+      hasDictResult,
+    });
+  }
 
   // ── 6. Create popup in main window and position it ─────────────────────
   const { container, dictArea, contentArea, actionsArea } = createPopup(contextResult.level);
   positionPopup(container, screenX, screenY);
 
   // Stage 1: Instant dictionary lookup (word-level only)
+  await loadDictionary();
   if (contextResult.level === ContextLevel.Word) {
     const dictEntry = lookupPhrase(selectedText);
     if (dictEntry) {
       showDictResult(dictArea, selectedText, dictEntry.phonetic, dictEntry.pos, dictEntry.translation);
+      hasDictResult = true;
     }
   }
 
@@ -257,6 +266,7 @@ async function handleTranslation(
   // ── 8. Stream translation ──────────────────────────────────────────────
   let fullText = "";
 
+  const messages = buildMessages();
   await streamTranslation(messages, {
     onChunk(text: string) {
       fullText += text;

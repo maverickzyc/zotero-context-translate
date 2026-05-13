@@ -7,32 +7,35 @@ export interface BuildPromptInput {
   context: string;
   glossaryEntries: GlossaryEntry[];
   targetLanguage: string;
+  hasDictResult?: boolean;
 }
 
-const SYSTEM_WORD = `你是学术论文阅读助手。用户正在阅读英文学术论文，选中了一个词/短语。
+const SYSTEM_WORD_WITH_DICT = `你是学术论文阅读助手。用户选中了一个词，词典已提供基础释义。
+请结合该词所在句子的语境，用一两句话简明解释这个词在此处的具体含义和作用。不要重复词典的基础翻译。直接给出解读，无需编号。`;
+
+const SYSTEM_WORD_NO_DICT = `你是学术论文阅读助手。用户选中了一个词/短语。
 请根据该词在句子中的具体语境，提供：
 1. 中文翻译（在此语境下最准确的译法）
-2. 词性和学术含义（一句话）
-3. 在这个句子中为什么这样翻译（一句话）
-回复格式简洁，不用重复原文。`;
+2. 在这个句子中的具体含义（一句话）
+回复简洁，不用重复原文。`;
 
 const SYSTEM_SENTENCE = `你是学术论文翻译助手。用户选中了一个句子，并提供了所在段落作为上下文。
 请提供：
 1. 准确的中文翻译
 2. 这句话在段落中的逻辑角色（引出论点/提供证据/总结/转折等，一句话）
-回复格式简洁。`;
+回复简洁。`;
 
 const SYSTEM_PARAGRAPH = `你是学术论文翻译助手。用户选中了一段文字，并提供了前后段落作为上下文。
 请提供：
 1. 完整的段落中文翻译
 2. 与前文的衔接关系（一句话）
 3. 本段的核心论点（一句话）
-回复格式简洁。`;
+回复简洁。`;
 
-function systemPromptFor(level: ContextLevel): string {
+function systemPromptFor(level: ContextLevel, hasDictResult = false): string {
   switch (level) {
     case ContextLevel.Word:
-      return SYSTEM_WORD;
+      return hasDictResult ? SYSTEM_WORD_WITH_DICT : SYSTEM_WORD_NO_DICT;
     case ContextLevel.Sentence:
       return SYSTEM_SENTENCE;
     case ContextLevel.Paragraph:
@@ -74,9 +77,9 @@ function contextLabel(level: ContextLevel): string {
  * then injected into the user message when present.
  */
 export function buildPrompt(input: BuildPromptInput): ChatMessage[] {
-  const { level, selected, context, glossaryEntries, targetLanguage } = input;
+  const { level, selected, context, glossaryEntries, targetLanguage, hasDictResult } = input;
 
-  const systemContent = systemPromptFor(level);
+  const systemContent = systemPromptFor(level, hasDictResult);
 
   // Match relevant glossary entries
   const matched = matchGlossaryTerms(glossaryEntries, selected, context);

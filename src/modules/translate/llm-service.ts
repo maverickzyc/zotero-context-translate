@@ -9,8 +9,75 @@ interface LLMConfig {
   maxTokens: number;
 }
 
+export interface LLMPreset {
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  temperature: string;
+}
+
+const prefix = "extensions.zotero.contextTranslate";
+
+export function getPresets(): LLMPreset[] {
+  const raw = (Zotero.Prefs.get(`${prefix}.llm.presets`, true) as string) || "[]";
+  try {
+    return JSON.parse(raw) as LLMPreset[];
+  } catch {
+    return [];
+  }
+}
+
+function savePresets(presets: LLMPreset[]): void {
+  Zotero.Prefs.set(`${prefix}.llm.presets`, JSON.stringify(presets), true);
+}
+
+export function setActiveIndex(index: number): void {
+  Zotero.Prefs.set(`${prefix}.llm.activeIndex`, index, true);
+}
+
+export function getActivePresetName(): string {
+  const presets = getPresets();
+  const activeIndex = (Zotero.Prefs.get(`${prefix}.llm.activeIndex`, true) as number) ?? 0;
+  if (presets.length > 0 && activeIndex >= 0 && activeIndex < presets.length) {
+    return presets[activeIndex].name;
+  }
+  return "Default";
+}
+
 export function getLLMConfig(): LLMConfig {
-  const prefix = "extensions.zotero.contextTranslate";
+  let presets = getPresets();
+  const activeIndex = (Zotero.Prefs.get(`${prefix}.llm.activeIndex`, true) as number) ?? 0;
+
+  // One-time migration: if no presets exist but an apiKey was set, migrate to first preset
+  if (presets.length === 0) {
+    const legacyApiKey = (Zotero.Prefs.get(`${prefix}.llm.apiKey`, true) as string) || "";
+    if (legacyApiKey) {
+      const migratedPreset: LLMPreset = {
+        name: "Default",
+        baseUrl: (Zotero.Prefs.get(`${prefix}.llm.baseUrl`, true) as string) || "https://api.openai.com/v1",
+        apiKey: legacyApiKey,
+        model: (Zotero.Prefs.get(`${prefix}.llm.model`, true) as string) || "gpt-4o-mini",
+        temperature: (Zotero.Prefs.get(`${prefix}.llm.temperature`, true) as string) || "0.3",
+      };
+      presets = [migratedPreset];
+      savePresets(presets);
+    }
+  }
+
+  // Use active preset if available
+  if (presets.length > 0 && activeIndex >= 0 && activeIndex < presets.length) {
+    const preset = presets[activeIndex];
+    return {
+      baseUrl: preset.baseUrl || "https://api.openai.com/v1",
+      apiKey: preset.apiKey || "",
+      model: preset.model || "gpt-4o-mini",
+      temperature: parseFloat(preset.temperature || "0.3"),
+      maxTokens: (Zotero.Prefs.get(`${prefix}.llm.maxTokens`, true) as number) || 1024,
+    };
+  }
+
+  // Fallback to individual pref keys (backward compatible)
   return {
     baseUrl: (Zotero.Prefs.get(`${prefix}.llm.baseUrl`, true) as string) || "https://api.openai.com/v1",
     apiKey: (Zotero.Prefs.get(`${prefix}.llm.apiKey`, true) as string) || "",

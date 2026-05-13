@@ -8,11 +8,22 @@ const LEVEL_CONFIG: Record<ContextLevel, { color: string; label: string }> = {
   [ContextLevel.Paragraph]: { color: "#fb923c", label: "段落" },
 };
 
+let pinned = false;
+
+export function isPinned(): boolean {
+  return pinned;
+}
+
 export function removePopup(): void {
   const mainDoc = Zotero.getMainWindow()?.document;
   if (!mainDoc) return;
   const existing = mainDoc.getElementById(POPUP_ID);
   if (existing) existing.remove();
+  pinned = false;
+}
+
+export function dismissIfNotPinned(): void {
+  if (!pinned) removePopup();
 }
 
 export function createPopup(
@@ -28,16 +39,14 @@ export function createPopup(
   const mainDoc = mainWin.document;
   const cfg = LEVEL_CONFIG[level];
 
-  // Inject blink keyframes once
   if (!mainDoc.getElementById("ctx-blink-style")) {
-    const style = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "style") as HTMLElement;
+    const style = el(mainDoc, "style");
     style.id = "ctx-blink-style";
     style.textContent = `@keyframes ctx-blink { 0%,100%{opacity:1} 50%{opacity:0} }`;
     mainDoc.documentElement!.appendChild(style);
   }
 
-  // Container — fixed position in the main Zotero window
-  const container = mainDoc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+  const container = el(mainDoc, "div");
   container.id = POPUP_ID;
   Object.assign(container.style, {
     position: "fixed",
@@ -58,7 +67,7 @@ export function createPopup(
     userSelect: "text",
   });
 
-  // Header (drag handle)
+  // ── Header ──────────────────────────────────────────────────────────────
   const header = el(mainDoc, "div");
   Object.assign(header.style, {
     display: "flex",
@@ -67,6 +76,7 @@ export function createPopup(
     background: "#181825",
     cursor: "grab",
     flexShrink: "0",
+    gap: "6px",
   });
 
   const badge = el(mainDoc, "span");
@@ -82,21 +92,41 @@ export function createPopup(
   badge.textContent = cfg.label;
 
   const title = el(mainDoc, "span");
-  Object.assign(title.style, { marginLeft: "8px", fontSize: "12px", color: "#a6adc8", flex: "1" });
+  Object.assign(title.style, { fontSize: "12px", color: "#a6adc8", flex: "1" });
   title.textContent = "Context Translate";
 
+  // Pin button
+  const pinBtn = el(mainDoc, "span");
+  Object.assign(pinBtn.style, {
+    cursor: "pointer",
+    fontSize: "14px",
+    color: "#6c7086",
+    padding: "0 2px",
+    lineHeight: "1",
+    title: "固定弹窗",
+  });
+  pinBtn.textContent = "📌";
+  pinBtn.style.opacity = "0.4";
+  pinBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pinned = !pinned;
+    pinBtn.style.opacity = pinned ? "1" : "0.4";
+    container.style.borderColor = pinned ? "#818cf8" : "#313244";
+  });
+
+  // Close button
   const closeBtn = el(mainDoc, "span");
   Object.assign(closeBtn.style, {
-    cursor: "pointer", fontSize: "16px", color: "#6c7086", padding: "0 4px", lineHeight: "1",
+    cursor: "pointer", fontSize: "16px", color: "#6c7086", padding: "0 2px", lineHeight: "1",
   });
   closeBtn.textContent = "✕";
   closeBtn.addEventListener("mouseenter", () => { closeBtn.style.color = "#f38ba8"; });
   closeBtn.addEventListener("mouseleave", () => { closeBtn.style.color = "#6c7086"; });
-  closeBtn.addEventListener("click", () => removePopup());
+  closeBtn.addEventListener("click", () => { pinned = false; removePopup(); });
 
-  header.append(badge, title, closeBtn);
+  header.append(badge, title, pinBtn, closeBtn);
 
-  // Content area
+  // ── Content ─────────────────────────────────────────────────────────────
   const contentArea = el(mainDoc, "div");
   Object.assign(contentArea.style, {
     padding: "12px 14px",
@@ -107,7 +137,7 @@ export function createPopup(
     flexGrow: "1",
   });
 
-  // Actions area
+  // ── Actions ─────────────────────────────────────────────────────────────
   const actionsArea = el(mainDoc, "div");
   Object.assign(actionsArea.style, {
     display: "flex",
@@ -119,55 +149,37 @@ export function createPopup(
   });
 
   container.append(header, contentArea, actionsArea);
-
-  // Drag — works because container is in the MAIN window document,
-  // not trapped inside the reader iframe
   attachDrag(mainDoc, header, container);
-
-  // Add to main window
   mainDoc.documentElement!.appendChild(container);
 
   return { container, contentArea, actionsArea };
 }
 
-export function positionPopup(
-  container: HTMLElement,
-  screenX: number,
-  screenY: number,
-): void {
+export function positionPopup(container: HTMLElement, screenX: number, screenY: number): void {
   const mainWin = Zotero.getMainWindow();
-  // Convert screen coordinates to main window coordinates
   const left = screenX - mainWin.screenX;
   const top = screenY - mainWin.screenY;
-
   const vw = mainWin.innerWidth;
   const vh = mainWin.innerHeight;
-
-  container.style.left = `${Math.min(left, vw - 450)}px`;
-  container.style.top = `${Math.min(top, vh - 200)}px`;
+  container.style.left = `${Math.max(10, Math.min(left, vw - 450))}px`;
+  container.style.top = `${Math.max(10, Math.min(top, vh - 200))}px`;
 }
 
 // ─── Streaming ────────────────────────────────────────────────────────────────
 
 export function appendStreamingCursor(contentArea: HTMLElement): HTMLElement {
   const doc = contentArea.ownerDocument!;
-  const cursor = doc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
+  const cursor = el(doc, "span");
   Object.assign(cursor.style, {
-    display: "inline-block",
-    width: "2px",
-    height: "1em",
-    background: "#818cf8",
-    verticalAlign: "text-bottom",
-    marginLeft: "1px",
-    animation: "ctx-blink 1s step-start infinite",
+    display: "inline-block", width: "2px", height: "1em",
+    background: "#818cf8", verticalAlign: "text-bottom",
+    marginLeft: "1px", animation: "ctx-blink 1s step-start infinite",
   });
   contentArea.appendChild(cursor);
   return cursor;
 }
 
-export function removeCursor(cursor: HTMLElement): void {
-  cursor.remove();
-}
+export function removeCursor(cursor: HTMLElement): void { cursor.remove(); }
 
 export function appendChunk(contentArea: HTMLElement, cursor: HTMLElement, text: string): void {
   contentArea.insertBefore(contentArea.ownerDocument!.createTextNode(text), cursor);
@@ -179,13 +191,8 @@ export function addAction(actionsArea: HTMLElement, label: string, onClick: () =
   const btn = el(actionsArea.ownerDocument!, "button");
   btn.textContent = label;
   Object.assign(btn.style, {
-    padding: "4px 12px",
-    borderRadius: "6px",
-    border: "1px solid #45475a",
-    background: "#313244",
-    color: "#cdd6f4",
-    fontSize: "12px",
-    cursor: "pointer",
+    padding: "4px 12px", borderRadius: "6px", border: "1px solid #45475a",
+    background: "#313244", color: "#cdd6f4", fontSize: "12px", cursor: "pointer",
   });
   btn.addEventListener("mouseenter", () => { btn.style.background = "#45475a"; });
   btn.addEventListener("mouseleave", () => { btn.style.background = "#313244"; });
@@ -204,6 +211,7 @@ function attachDrag(doc: Document, handle: HTMLElement, container: HTMLElement):
   let startX = 0, startY = 0, origLeft = 0, origTop = 0;
 
   function onMouseDown(e: MouseEvent) {
+    if ((e.target as HTMLElement)?.style?.cursor === "pointer") return;
     startX = e.screenX;
     startY = e.screenY;
     origLeft = parseFloat(container.style.left) || 0;

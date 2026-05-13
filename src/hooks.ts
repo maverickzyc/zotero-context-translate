@@ -19,13 +19,15 @@ import { streamTranslation } from "./modules/translate/llm-service";
 import {
   createPopup,
   removePopup,
+  dismissIfNotPinned,
+  isPinned,
   positionPopup,
   appendStreamingCursor,
   appendChunk,
   removeCursor,
   addAction,
 } from "./modules/ui/popup";
-import { addHistoryRecord } from "./modules/ui/history";
+import { addHistoryRecord, loadHistory } from "./modules/ui/history";
 import {
   onPrefsLoad,
   onImportGlossary,
@@ -133,13 +135,29 @@ const onTextSelectionPopup: _ZoteroTypes.Reader.EventHandler<"renderTextSelectio
 
     doc.defaultView?.setTimeout(() => {
       const rect = anchor.getBoundingClientRect();
-      // Convert iframe-local coords to screen coords
       const iframeWin = doc.defaultView;
       const screenX = (iframeWin?.mozInnerScreenX ?? 0) + rect.left;
       const screenY = (iframeWin?.mozInnerScreenY ?? 0) + rect.bottom + 5;
 
       handleTranslation(reader, screenX, screenY, selectionText);
     }, 50);
+
+    // Auto-dismiss: poll for selection clearing (works across iframes)
+    const dismissTimer = doc.defaultView?.setInterval(() => {
+      if (isPinned()) return;
+      const mainDoc = Zotero.getMainWindow()?.document;
+      if (!mainDoc?.getElementById("ctx-translate-popup")) {
+        doc.defaultView?.clearInterval(dismissTimer);
+        return;
+      }
+      // Check if text is still selected in the reader
+      const p2 = params as any;
+      const stillSelected = doc.getSelection()?.toString()?.trim();
+      if (!stillSelected) {
+        dismissIfNotPinned();
+        doc.defaultView?.clearInterval(dismissTimer);
+      }
+    }, 500);
   };
 
 async function handleTranslation(
@@ -270,6 +288,47 @@ async function handleTranslation(
       addAction(actionsArea, "\u{1F504} 重试", () => {
         removePopup();
         handleTranslation(reader, screenX, screenY, selectedText);
+      });
+
+      // History button — show recent translations in the popup
+      addAction(actionsArea, "\u{1F4DC} 历史", async () => {
+        try {
+          const history = await loadHistory(profileDir, libraryId);
+          const recent = history.records.slice(0, 10);
+          if (recent.length === 0) {
+            contentArea.textContent = "暂无翻译记录";
+            return;
+          }
+          contentArea.innerHTML = "";
+          const doc = contentArea.ownerDocument!;
+          for (const rec of recent) {
+            const item = doc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+            Object.assign(item.style, {
+              padding: "6px 0",
+              borderBottom: "1px solid #313244",
+              cursor: "pointer",
+              fontSize: "13px",
+            });
+            const word = doc.createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLElement;
+            word.style.color = "#818cf8";
+            word.style.fontWeight = "600";
+            word.textContent = rec.selected.substring(0, 30);
+            const result = doc.createElementNS("http://www.w3.org/1999/xhtml", "div") as HTMLElement;
+            result.style.color = "#a6adc8";
+            result.style.fontSize = "12px";
+            result.style.marginTop = "2px";
+            result.textContent = rec.result.substring(0, 80) + (rec.result.length > 80 ? "..." : "");
+            item.append(word, result);
+            item.addEventListener("click", () => {
+              contentArea.innerHTML = "";
+              contentArea.style.whiteSpace = "pre-wrap";
+              contentArea.textContent = rec.result;
+            });
+            contentArea.appendChild(item);
+          }
+        } catch {
+          contentArea.textContent = "读取历史记录失败";
+        }
       });
 
       // Save to history

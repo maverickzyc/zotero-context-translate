@@ -3,7 +3,7 @@ dist/
 build/
 .scaffold/
 *.xpi
-!zotero-context-translate-*.xpi
+!releases/**/*.xpi
 .DS_Store
 .superpowers/
 *.log

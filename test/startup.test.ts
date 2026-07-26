@@ -27,35 +27,22 @@ import { onTextSelectionPopup, onViewContextMenu } from "../src/hooks";
 const prefsPrefix = "extensions.zotero.contextTranslate";
 
 describe("startup", function () {
-  it("creates abort primitives from the Zotero DOM window", function () {
-    let controller: AbortController;
-    try {
-      controller = createZoteroAbortController();
-    } catch {
-      throw new Error("Zotero DOM AbortController construction failed");
-    }
-    let signal: AbortSignal;
-    try {
-      signal = controller.signal;
-    } catch {
-      throw new Error("Zotero DOM AbortController signal access failed");
-    }
-    if (!signal) {
+  it("constructs an AbortController from the Zotero DOM window", function () {
+    const controller = createZoteroAbortController();
+    if (!controller.signal) {
       throw new Error("Zotero DOM AbortController did not expose a signal");
     }
-    try {
-      controller.abort();
-    } catch {
-      throw new Error("Zotero DOM AbortController.abort failed");
-    }
-    let decoded: string;
-    try {
-      decoded = String(
-        decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
-      );
-    } catch {
-      throw new Error("Zotero DOM TextDecoder construction or decoding failed");
-    }
+  });
+
+  it("calls abort on the Zotero DOM AbortController", function () {
+    const controller = createZoteroAbortController();
+    controller.abort();
+  });
+
+  it("decodes UTF-8 through the Zotero DOM TextDecoder", function () {
+    const decoded = String(
+      decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
+    );
     if (decoded !== "中文") {
       throw new Error("Zotero DOM TextDecoder returned unexpected text");
     }

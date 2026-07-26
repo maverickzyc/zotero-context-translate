@@ -16,48 +16,48 @@
 
 ### Files to Create (from scratch, after template scaffolding)
 
-| File | Responsibility |
-|---|---|
+| File                                      | Responsibility                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
 | `src/modules/context/paragraph-detect.ts` | Reconstruct paragraphs from pdf.js TextItem[], detect boundaries, handle multi-column |
-| `src/modules/context/context-resolver.ts` | Determine context level from selection, extract surrounding context |
-| `src/modules/context/page-cache.ts` | Per-page text cache with document lifecycle management |
-| `src/modules/context/text-extractor.ts` | Bridge to pdf.js internal APIs inside Zotero Reader iframe |
-| `src/modules/translate/stream-parser.ts` | Parse SSE text/event-stream from LLM API |
-| `src/modules/translate/prompt-builder.ts` | Build chat messages array based on context level + glossary |
-| `src/modules/translate/glossary.ts` | Glossary CRUD, term matching with token budget, CSV import/export |
-| `src/modules/translate/llm-service.ts` | HTTP POST to OpenAI-compatible endpoint, orchestrate streaming |
-| `src/modules/ui/popup.ts` | Translation popup panel with streaming rendering |
-| `src/modules/ui/history.ts` | Translation history JSON persistence + query |
-| `src/modules/ui/preferences.ts` | Preferences panel logic (onLoad, event handlers) |
-| `src/types.ts` | Shared TypeScript interfaces for all modules |
-| `test/paragraph-detect.test.ts` | Unit tests for paragraph detection |
-| `test/context-resolver.test.ts` | Unit tests for context resolver |
-| `test/stream-parser.test.ts` | Unit tests for SSE stream parser |
-| `test/prompt-builder.test.ts` | Unit tests for prompt builder |
-| `test/glossary.test.ts` | Unit tests for glossary matching |
+| `src/modules/context/context-resolver.ts` | Determine context level from selection, extract surrounding context                   |
+| `src/modules/context/page-cache.ts`       | Per-page text cache with document lifecycle management                                |
+| `src/modules/context/text-extractor.ts`   | Bridge to pdf.js internal APIs inside Zotero Reader iframe                            |
+| `src/modules/translate/stream-parser.ts`  | Parse SSE text/event-stream from LLM API                                              |
+| `src/modules/translate/prompt-builder.ts` | Build chat messages array based on context level + glossary                           |
+| `src/modules/translate/glossary.ts`       | Glossary CRUD, term matching with token budget, CSV import/export                     |
+| `src/modules/translate/llm-service.ts`    | HTTP POST to OpenAI-compatible endpoint, orchestrate streaming                        |
+| `src/modules/ui/popup.ts`                 | Translation popup panel with streaming rendering                                      |
+| `src/modules/ui/history.ts`               | Translation history JSON persistence + query                                          |
+| `src/modules/ui/preferences.ts`           | Preferences panel logic (onLoad, event handlers)                                      |
+| `src/types.ts`                            | Shared TypeScript interfaces for all modules                                          |
+| `test/paragraph-detect.test.ts`           | Unit tests for paragraph detection                                                    |
+| `test/context-resolver.test.ts`           | Unit tests for context resolver                                                       |
+| `test/stream-parser.test.ts`              | Unit tests for SSE stream parser                                                      |
+| `test/prompt-builder.test.ts`             | Unit tests for prompt builder                                                         |
+| `test/glossary.test.ts`                   | Unit tests for glossary matching                                                      |
 
 ### Files to Modify (from template)
 
-| File | Changes |
-|---|---|
-| `package.json` | Update `config` block (addonName, addonID, addonRef, prefsPrefix), add uuid dep |
-| `addon/manifest.json` | Set `strict_min_version: "8.0"`, `strict_max_version: "9.*"` |
-| `addon/prefs.js` | Define all plugin preference keys and defaults |
-| `addon/locale/en-US/addon.ftl` | English locale strings |
-| `addon/locale/zh-CN/addon.ftl` | Chinese locale strings |
-| `addon/locale/en-US/preferences.ftl` | Preferences panel English strings |
-| `addon/locale/zh-CN/preferences.ftl` | Preferences panel Chinese strings |
-| `addon/content/preferences.xhtml` | Full settings panel UI |
-| `src/hooks.ts` | Register Reader event listeners, menus, wire all modules |
-| `src/addon.ts` | Add module state fields to Addon data |
-| `src/index.ts` | Minor: ensure correct addonInstance name |
-| `typings/global.d.ts` | Add module-specific globals if needed |
-| `zotero-plugin.config.ts` | Update esbuild target to `firefox140` |
+| File                                 | Changes                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| `package.json`                       | Update `config` block (addonName, addonID, addonRef, prefsPrefix), add uuid dep |
+| `addon/manifest.json`                | Set `strict_min_version: "8.0"`, `strict_max_version: "9.*"`                    |
+| `addon/prefs.js`                     | Define all plugin preference keys and defaults                                  |
+| `addon/locale/en-US/addon.ftl`       | English locale strings                                                          |
+| `addon/locale/zh-CN/addon.ftl`       | Chinese locale strings                                                          |
+| `addon/locale/en-US/preferences.ftl` | Preferences panel English strings                                               |
+| `addon/locale/zh-CN/preferences.ftl` | Preferences panel Chinese strings                                               |
+| `addon/content/preferences.xhtml`    | Full settings panel UI                                                          |
+| `src/hooks.ts`                       | Register Reader event listeners, menus, wire all modules                        |
+| `src/addon.ts`                       | Add module state fields to Addon data                                           |
+| `src/index.ts`                       | Minor: ensure correct addonInstance name                                        |
+| `typings/global.d.ts`                | Add module-specific globals if needed                                           |
+| `zotero-plugin.config.ts`            | Update esbuild target to `firefox140`                                           |
 
 ### Files to Delete (template examples)
 
-| File | Reason |
-|---|---|
+| File                      | Reason                            |
+| ------------------------- | --------------------------------- |
 | `src/modules/examples.ts` | Template example code, not needed |
 
 ---
@@ -65,6 +65,7 @@
 ## Task 1: Project Scaffolding
 
 **Files:**
+
 - Clone: `zotero-plugin-template` → project root
 - Modify: `package.json`, `addon/manifest.json`, `zotero-plugin.config.ts`, `.env`
 - Delete: `src/modules/examples.ts`
@@ -72,12 +73,13 @@
 - [ ] **Step 1: Clone the template**
 
 ```bash
-cd /Users/yongchen/Documents/Projects/Zotero-Context-Translate
+cd /path/to/Zotero-Context-Translate
 # We already have a git repo with docs, so we download template files into it
 npx degit windingwind/zotero-plugin-template --force .
 ```
 
 If `degit` fails or overwrites our docs, restore them from git:
+
 ```bash
 git checkout -- docs/ CLAUDE.md CHANGELOG.md
 ```
@@ -90,7 +92,7 @@ Update the `config` block in `package.json`:
 {
   "config": {
     "addonName": "Zotero Context Translate",
-    "addonID": "context-translate@zotero.org",
+    "addonID": "zotero-context-translate@maverickzyc.github.io",
     "addonRef": "context-translate",
     "addonInstance": "ContextTranslate",
     "prefsPrefix": "extensions.zotero.contextTranslate"
@@ -99,6 +101,7 @@ Update the `config` block in `package.json`:
 ```
 
 Also add the `uuid` dependency:
+
 ```bash
 npm install uuid
 npm install -D @types/uuid
@@ -153,9 +156,10 @@ cp .env.example .env
 ```
 
 Edit `.env`:
+
 ```
 ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /Applications/Zotero.app/Contents/MacOS/zotero
-ZOTERO_PLUGIN_PROFILE_PATH = /Users/yongchen/Zotero/dev-profile
+ZOTERO_PLUGIN_PROFILE_PATH = /path/to/zotero-dev-profile
 ```
 
 (Adjust paths to actual Zotero install and a dev profile. Create dev profile with `zotero -P` if needed.)
@@ -192,6 +196,7 @@ git commit -m "chore: scaffold project from zotero-plugin-template
 ## Task 2: Shared Types & Preferences
 
 **Files:**
+
 - Create: `src/types.ts`
 - Modify: `addon/prefs.js`
 
@@ -298,6 +303,7 @@ git commit -m "feat: define shared types and preference keys
 ## Task 3: Paragraph Detection (TDD)
 
 **Files:**
+
 - Create: `src/modules/context/paragraph-detect.ts`
 - Test: `test/paragraph-detect.test.ts`
 
@@ -382,7 +388,8 @@ describe("paragraph-detect", () => {
     });
 
     it("does not split on common abbreviations", () => {
-      const text = "Smith et al. found that e.g. in Fig. 3 the results were significant.";
+      const text =
+        "Smith et al. found that e.g. in Fig. 3 the results were significant.";
       const sentences = splitSentences(text);
       expect(sentences).to.have.length(1);
     });
@@ -394,7 +401,8 @@ describe("paragraph-detect", () => {
     });
 
     it("handles multiple sentences with abbreviations", () => {
-      const text = "See Fig. 1 for details. The results (p < 0.05) were significant.";
+      const text =
+        "See Fig. 1 for details. The results (p < 0.05) were significant.";
       const sentences = splitSentences(text);
       expect(sentences).to.have.length(2);
     });
@@ -436,10 +444,33 @@ interface TextLine {
 }
 
 const ABBREVIATIONS = new Set([
-  "et al", "fig", "figs", "eq", "eqs", "vol", "no",
-  "e.g", "i.e", "vs", "dr", "prof", "mr", "mrs", "ms",
-  "inc", "ltd", "jr", "sr", "dept", "approx", "est",
-  "ref", "refs", "sect", "ch", "pp",
+  "et al",
+  "fig",
+  "figs",
+  "eq",
+  "eqs",
+  "vol",
+  "no",
+  "e.g",
+  "i.e",
+  "vs",
+  "dr",
+  "prof",
+  "mr",
+  "mrs",
+  "ms",
+  "inc",
+  "ltd",
+  "jr",
+  "sr",
+  "dept",
+  "approx",
+  "est",
+  "ref",
+  "refs",
+  "sect",
+  "ch",
+  "pp",
 ]);
 
 export function detectColumns(items: TextItemLike[]): number {
@@ -477,12 +508,17 @@ export function splitSentences(text: string): string[] {
     if (/[.?!]\s*$/.test(tokens[i])) {
       const word = tokens[i].replace(/[.?!]\s*$/, "").toLowerCase();
 
-      if (ABBREVIATIONS.has(word) || ABBREVIATIONS.has(word.replace(/\.$/, ""))) {
+      if (
+        ABBREVIATIONS.has(word) ||
+        ABBREVIATIONS.has(word.replace(/\.$/, ""))
+      ) {
         continue;
       }
 
-      if (/^\d+\.\d*$/.test(tokens[i].replace(/[?!]\s*$/, "")) ||
-          /\d+\.\d+/.test(tokens[i])) {
+      if (
+        /^\d+\.\d*$/.test(tokens[i].replace(/[?!]\s*$/, "")) ||
+        /\d+\.\d+/.test(tokens[i])
+      ) {
         continue;
       }
 
@@ -522,7 +558,10 @@ function groupIntoLines(items: TextItemLike[]): TextLine[] {
 }
 
 function lineToText(line: TextLine): string {
-  return line.items.map((it) => it.str).join("").trim();
+  return line.items
+    .map((it) => it.str)
+    .join("")
+    .trim();
 }
 
 export function reconstructParagraphs(items: TextItemLike[]): ParagraphResult {
@@ -609,6 +648,7 @@ git commit -m "feat: implement paragraph detection with multi-column support
 ## Task 4: Context Resolver (TDD)
 
 **Files:**
+
 - Create: `src/modules/context/context-resolver.ts`
 - Test: `test/context-resolver.test.ts`
 
@@ -643,9 +683,7 @@ describe("context-resolver", () => {
 
     it("returns Paragraph for text with 2+ sentence-ending punctuation", () => {
       expect(
-        determineLevel(
-          "First sentence. Second sentence. Third sentence.",
-        ),
+        determineLevel("First sentence. Second sentence. Third sentence."),
       ).to.equal(ContextLevel.Paragraph);
     });
   });
@@ -661,9 +699,7 @@ describe("context-resolver", () => {
       const result = resolveContext("epistemological", paragraphs);
       expect(result.level).to.equal(ContextLevel.Word);
       expect(result.context).to.include("epistemological");
-      expect(result.context.length).to.be.greaterThan(
-        "epistemological".length,
-      );
+      expect(result.context.length).to.be.greaterThan("epistemological".length);
     });
 
     it("returns paragraph context for sentence-level selection", () => {
@@ -720,10 +756,7 @@ export function determineLevel(selected: string): ContextLevel {
   return ContextLevel.Sentence;
 }
 
-function findParagraphIndex(
-  selected: string,
-  paragraphs: string[],
-): number {
+function findParagraphIndex(selected: string, paragraphs: string[]): number {
   const normalized = selected.trim().toLowerCase();
   for (let i = 0; i < paragraphs.length; i++) {
     if (paragraphs[i].toLowerCase().includes(normalized)) {
@@ -733,10 +766,7 @@ function findParagraphIndex(
   return -1;
 }
 
-function findSentenceContext(
-  selected: string,
-  paragraphs: string[],
-): string {
+function findSentenceContext(selected: string, paragraphs: string[]): string {
   const paraIdx = findParagraphIndex(selected, paragraphs);
   if (paraIdx === -1) return "";
 
@@ -752,10 +782,7 @@ function findSentenceContext(
   return paragraphs[paraIdx];
 }
 
-function getParagraphContext(
-  selected: string,
-  paragraphs: string[],
-): string {
+function getParagraphContext(selected: string, paragraphs: string[]): string {
   const paraIdx = findParagraphIndex(selected, paragraphs);
   if (paraIdx === -1) return "";
   return paragraphs[paraIdx];
@@ -833,6 +860,7 @@ git commit -m "feat: implement context resolver with auto-grading
 ## Task 5: Page Cache + Text Extractor
 
 **Files:**
+
 - Create: `src/modules/context/page-cache.ts`, `src/modules/context/text-extractor.ts`
 
 These modules depend on Zotero APIs and are tested via integration (dev mode).
@@ -884,10 +912,7 @@ Create `src/modules/context/text-extractor.ts`:
 
 ```ts
 import { PageTextData } from "../../types";
-import {
-  reconstructParagraphs,
-  TextItemLike,
-} from "./paragraph-detect";
+import { reconstructParagraphs, TextItemLike } from "./paragraph-detect";
 import { getCachedPage, setCachedPage } from "./page-cache";
 
 function getReaderIframeWindow(reader: any): any {
@@ -910,14 +935,15 @@ export function getSelectedText(reader: any): string | null {
   try {
     const iframeWindow = getReaderIframeWindow(reader);
     const internalReader = getInternalReader(iframeWindow);
-    const selectionRanges =
-      internalReader?._primaryView?._selectionRanges;
+    const selectionRanges = internalReader?._primaryView?._selectionRanges;
     if (!selectionRanges || selectionRanges.length === 0) return null;
 
-    return selectionRanges
-      .map((range: any) => range.toString?.() || "")
-      .join(" ")
-      .trim() || null;
+    return (
+      selectionRanges
+        .map((range: any) => range.toString?.() || "")
+        .join(" ")
+        .trim() || null
+    );
   } catch {
     return null;
   }
@@ -942,8 +968,8 @@ async function extractPageTextItems(
 ): Promise<TextItemLike[]> {
   const iframeWindow = getReaderIframeWindow(reader);
   const pdfDocument =
-    iframeWindow?._reader?._primaryView?._iframeWindow
-      ?.PDFViewerApplication?.pdfDocument;
+    iframeWindow?._reader?._primaryView?._iframeWindow?.PDFViewerApplication
+      ?.pdfDocument;
 
   if (!pdfDocument) throw new Error("Cannot access PDF document");
 
@@ -1049,6 +1075,7 @@ git commit -m "feat: implement page cache and text extractor
 ## Task 6: SSE Stream Parser (TDD)
 
 **Files:**
+
 - Create: `src/modules/translate/stream-parser.ts`
 - Test: `test/stream-parser.test.ts`
 
@@ -1058,13 +1085,15 @@ Create `test/stream-parser.test.ts`:
 
 ```ts
 import { expect } from "chai";
-import { parseSSEChunk, SSEParser } from "../src/modules/translate/stream-parser";
+import {
+  parseSSEChunk,
+  SSEParser,
+} from "../src/modules/translate/stream-parser";
 
 describe("stream-parser", () => {
   describe("parseSSEChunk", () => {
     it("extracts delta content from a data line", () => {
-      const line =
-        'data: {"choices":[{"delta":{"content":"Hello"}}]}';
+      const line = 'data: {"choices":[{"delta":{"content":"Hello"}}]}';
       expect(parseSSEChunk(line)).to.equal("Hello");
     });
 
@@ -1073,8 +1102,7 @@ describe("stream-parser", () => {
     });
 
     it("returns empty string for empty delta", () => {
-      const line =
-        'data: {"choices":[{"delta":{}}]}';
+      const line = 'data: {"choices":[{"delta":{}}]}';
       expect(parseSSEChunk(line)).to.equal("");
     });
 
@@ -1104,7 +1132,9 @@ describe("stream-parser", () => {
       let doneText = "";
       const parser = new SSEParser({
         onChunk: () => {},
-        onDone: (text) => { doneText = text; },
+        onDone: (text) => {
+          doneText = text;
+        },
         onError: () => {},
       });
 
@@ -1232,6 +1262,7 @@ git commit -m "feat: implement SSE stream parser for OpenAI-compatible API
 ## Task 7: Prompt Builder + Glossary (TDD)
 
 **Files:**
+
 - Create: `src/modules/translate/prompt-builder.ts`, `src/modules/translate/glossary.ts`
 - Test: `test/prompt-builder.test.ts`, `test/glossary.test.ts`
 
@@ -1277,7 +1308,8 @@ describe("glossary", () => {
     });
 
     it("respects maxTerms limit", () => {
-      const text = "epistemological triangulation mixed-methods positivism ontological";
+      const text =
+        "epistemological triangulation mixed-methods positivism ontological";
       const matched = matchGlossaryTerms(entries, text, text, 2);
       expect(matched).to.have.length(2);
     });
@@ -1335,7 +1367,8 @@ describe("prompt-builder", () => {
       const messages = buildPrompt({
         level: ContextLevel.Paragraph,
         selected: "The methodology paragraph.",
-        context: "[前一段] Introduction.\n\n[选中段] The methodology paragraph.\n\n[后一段] Results.",
+        context:
+          "[前一段] Introduction.\n\n[选中段] The methodology paragraph.\n\n[后一段] Results.",
         glossaryEntries: [],
         targetLanguage: "zh-CN",
       });
@@ -1399,7 +1432,8 @@ export function matchGlossaryTerms(
 ): GlossaryEntry[] {
   const selectedLower = selected.toLowerCase();
   const contextLower = context.toLowerCase();
-  const limit = maxTerms ?? Math.floor(DEFAULT_TOKEN_BUDGET / APPROX_TOKENS_PER_ENTRY);
+  const limit =
+    maxTerms ?? Math.floor(DEFAULT_TOKEN_BUDGET / APPROX_TOKENS_PER_ENTRY);
 
   const inSelected: GlossaryEntry[] = [];
   const inContextOnly: GlossaryEntry[] = [];
@@ -1427,8 +1461,14 @@ export function formatGlossaryForPrompt(entries: GlossaryEntry[]): string {
     .join("\n");
 }
 
-export async function loadGlossary(profileDir: string, libraryId: number): Promise<GlossaryData> {
-  const path = PathUtils.join(profileDir, `context-translate-glossary-${libraryId}.json`);
+export async function loadGlossary(
+  profileDir: string,
+  libraryId: number,
+): Promise<GlossaryData> {
+  const path = PathUtils.join(
+    profileDir,
+    `context-translate-glossary-${libraryId}.json`,
+  );
   try {
     const raw = await Zotero.File.getContentsAsync(path);
     return JSON.parse(raw as string) as GlossaryData;
@@ -1442,7 +1482,10 @@ export async function saveGlossary(
   libraryId: number,
   data: GlossaryData,
 ): Promise<void> {
-  const path = PathUtils.join(profileDir, `context-translate-glossary-${libraryId}.json`);
+  const path = PathUtils.join(
+    profileDir,
+    `context-translate-glossary-${libraryId}.json`,
+  );
   await Zotero.File.putContentsAsync(path, JSON.stringify(data, null, 2));
 }
 
@@ -1601,6 +1644,7 @@ git commit -m "feat: implement glossary manager and prompt builder
 ## Task 8: LLM Service
 
 **Files:**
+
 - Create: `src/modules/translate/llm-service.ts`
 
 - [ ] **Step 1: Implement llm-service.ts**
@@ -1622,11 +1666,18 @@ interface LLMConfig {
 export function getLLMConfig(): LLMConfig {
   const prefix = "extensions.zotero.contextTranslate";
   return {
-    baseUrl: (Zotero.Prefs.get(`${prefix}.llm.baseUrl`, true) as string) || "https://api.openai.com/v1",
+    baseUrl:
+      (Zotero.Prefs.get(`${prefix}.llm.baseUrl`, true) as string) ||
+      "https://api.openai.com/v1",
     apiKey: (Zotero.Prefs.get(`${prefix}.llm.apiKey`, true) as string) || "",
-    model: (Zotero.Prefs.get(`${prefix}.llm.model`, true) as string) || "gpt-4o-mini",
-    temperature: parseFloat((Zotero.Prefs.get(`${prefix}.llm.temperature`, true) as string) || "0.3"),
-    maxTokens: (Zotero.Prefs.get(`${prefix}.llm.maxTokens`, true) as number) || 1024,
+    model:
+      (Zotero.Prefs.get(`${prefix}.llm.model`, true) as string) ||
+      "gpt-4o-mini",
+    temperature: parseFloat(
+      (Zotero.Prefs.get(`${prefix}.llm.temperature`, true) as string) || "0.3",
+    ),
+    maxTokens:
+      (Zotero.Prefs.get(`${prefix}.llm.maxTokens`, true) as number) || 1024,
   };
 }
 
@@ -1638,7 +1689,11 @@ export async function streamTranslation(
   const cfg = config || getLLMConfig();
 
   if (!cfg.apiKey) {
-    callbacks.onError(new Error("API Key not configured. Go to Settings → Context Translate to set it."));
+    callbacks.onError(
+      new Error(
+        "API Key not configured. Go to Settings → Context Translate to set it.",
+      ),
+    );
     return;
   }
 
@@ -1712,6 +1767,7 @@ git commit -m "feat: implement LLM service with SSE streaming
 ## Task 9: Translation History Store
 
 **Files:**
+
 - Create: `src/modules/ui/history.ts`
 
 - [ ] **Step 1: Implement history.ts**
@@ -1818,6 +1874,7 @@ git commit -m "feat: implement translation history store
 ## Task 10: Popup UI
 
 **Files:**
+
 - Create: `src/modules/ui/popup.ts`
 
 - [ ] **Step 1: Implement popup.ts**
@@ -1845,7 +1902,11 @@ export function removePopup(doc: Document): void {
 export function createPopup(
   doc: Document,
   level: ContextLevel,
-): { container: HTMLElement; contentArea: HTMLElement; actionsArea: HTMLElement } {
+): {
+  container: HTMLElement;
+  contentArea: HTMLElement;
+  actionsArea: HTMLElement;
+} {
   removePopup(doc);
 
   const container = doc.createElement("div");
@@ -1893,7 +1954,10 @@ export function createPopup(
   return { container, contentArea, actionsArea };
 }
 
-export function appendStreamingCursor(doc: Document, contentArea: HTMLElement): HTMLElement {
+export function appendStreamingCursor(
+  doc: Document,
+  contentArea: HTMLElement,
+): HTMLElement {
   const cursor = doc.createElement("span");
   cursor.className = "context-translate-cursor";
   cursor.style.cssText = `
@@ -1919,7 +1983,11 @@ export function removeCursor(cursor: HTMLElement): void {
   cursor.parentNode?.removeChild(cursor);
 }
 
-export function appendChunk(contentArea: HTMLElement, cursor: HTMLElement, text: string): void {
+export function appendChunk(
+  contentArea: HTMLElement,
+  cursor: HTMLElement,
+  text: string,
+): void {
   const textNode = contentArea.ownerDocument.createTextNode(text);
   contentArea.insertBefore(textNode, cursor);
 }
@@ -1966,7 +2034,10 @@ export function positionPopup(
 }
 
 function enableDrag(container: HTMLElement, handle: HTMLElement): void {
-  let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  let startX = 0,
+    startY = 0,
+    startLeft = 0,
+    startTop = 0;
 
   function onMouseDown(e: MouseEvent) {
     startX = e.clientX;
@@ -2013,6 +2084,7 @@ git commit -m "feat: implement translation popup panel
 ## Task 11: Preferences Panel
 
 **Files:**
+
 - Modify: `addon/content/preferences.xhtml`
 - Create: `src/modules/ui/preferences.ts`
 
@@ -2090,7 +2162,12 @@ Replace `addon/content/preferences.xhtml` with:
 Create `src/modules/ui/preferences.ts`:
 
 ```ts
-import { loadGlossary, saveGlossary, glossaryFromCSV, glossaryToCSV } from "../translate/glossary";
+import {
+  loadGlossary,
+  saveGlossary,
+  glossaryFromCSV,
+  glossaryToCSV,
+} from "../translate/glossary";
 
 export async function onPrefsLoad(win: Window): Promise<void> {
   await updateGlossaryCount(win);
@@ -2160,6 +2237,7 @@ git commit -m "feat: implement preferences panel
 ## Task 12: Plugin Wiring (Hooks + Entry + Locale)
 
 **Files:**
+
 - Modify: `src/hooks.ts`, `src/addon.ts`, `src/index.ts`
 - Modify: `addon/locale/en-US/addon.ftl`, `addon/locale/zh-CN/addon.ftl`
 - Modify: `addon/locale/en-US/preferences.ftl`, `addon/locale/zh-CN/preferences.ftl`
@@ -2167,18 +2245,21 @@ git commit -m "feat: implement preferences panel
 - [ ] **Step 1: Write locale files**
 
 `addon/locale/en-US/addon.ftl`:
+
 ```ftl
 context-translate-menuitem-translate = Translate with Context
 context-translate-menuitem-history = Translation History
 ```
 
 `addon/locale/zh-CN/addon.ftl`:
+
 ```ftl
 context-translate-menuitem-translate = 上下文翻译
 context-translate-menuitem-history = 翻译历史
 ```
 
 `addon/locale/en-US/preferences.ftl`:
+
 ```ftl
 context-translate-prefs-llm-title = LLM Settings
 context-translate-prefs-llm-baseurl = API Base URL
@@ -2194,6 +2275,7 @@ context-translate-prefs-glossary-export = Export CSV
 ```
 
 `addon/locale/zh-CN/preferences.ftl`:
+
 ```ftl
 context-translate-prefs-llm-title = LLM 设置
 context-translate-prefs-llm-baseurl = API 地址
@@ -2221,7 +2303,10 @@ import {
   getPageTextWithNeighbors,
 } from "./modules/context/text-extractor";
 import { resolveContext } from "./modules/context/context-resolver";
-import { clearDocumentCache, clearAllCache } from "./modules/context/page-cache";
+import {
+  clearDocumentCache,
+  clearAllCache,
+} from "./modules/context/page-cache";
 import { matchGlossaryTerms, loadGlossary } from "./modules/translate/glossary";
 import { buildPrompt } from "./modules/translate/prompt-builder";
 import { streamTranslation } from "./modules/translate/llm-service";
@@ -2286,23 +2371,14 @@ async function onTextSelectionPopup(event: {
     const selectedText = getSelectedText(reader);
     if (!selectedText) return;
 
-    const item = Zotero.Reader.getByTabID(
-      Zotero_Tabs.selectedID,
-    )?.itemID;
+    const item = Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)?.itemID;
     const pageNumber = getCurrentPageNumber(reader);
 
     if (!item || !pageNumber) return;
 
     try {
-      const pageData = await getPageTextWithNeighbors(
-        reader,
-        item,
-        pageNumber,
-      );
-      const contextResult = resolveContext(
-        selectedText,
-        pageData.paragraphs,
-      );
+      const pageData = await getPageTextWithNeighbors(reader, item, pageNumber);
+      const contextResult = resolveContext(selectedText, pageData.paragraphs);
 
       const profileDir = Zotero.Profile.dir;
       const libraryId = Zotero.Libraries.userLibraryID;
@@ -2350,9 +2426,8 @@ async function onTextSelectionPopup(event: {
 
           if (contextResult.level === ContextLevel.Word) {
             addAction(doc, actionsArea, "📌 加入术语表", async () => {
-              const { addGlossaryEntry, saveGlossary: saveGloss } = await import(
-                "./modules/translate/glossary"
-              );
+              const { addGlossaryEntry, saveGlossary: saveGloss } =
+                await import("./modules/translate/glossary");
               const data = await loadGlossary(profileDir, libraryId);
               const updated = addGlossaryEntry(data, {
                 term: contextResult.selected,
@@ -2402,7 +2477,6 @@ async function onTextSelectionPopup(event: {
         }
       };
       doc.addEventListener("keydown", onKeyDown);
-
     } catch (error) {
       Zotero.log(`Context Translate error: ${error}`, "error");
     }
@@ -2414,7 +2488,9 @@ async function onTextSelectionPopup(event: {
 function onMainWindowLoad(win: Window) {
   const doc = win.document;
   doc.getElementById("MozXULElement")
-    ? (win as any).MozXULElement.insertFTLIfNeeded(`${config.addonRef}-addon.ftl`)
+    ? (win as any).MozXULElement.insertFTLIfNeeded(
+        `${config.addonRef}-addon.ftl`,
+      )
     : null;
 }
 
@@ -2513,6 +2589,7 @@ git commit -m "feat: wire plugin lifecycle, reader events, and locale
 ## Task 13: Build, Verify & Manual Test
 
 **Files:**
+
 - Modify: `zotero-plugin.config.ts` (if needed)
 
 - [ ] **Step 1: Run type check**
@@ -2522,6 +2599,7 @@ npx tsc --noEmit
 ```
 
 Fix any type errors. Common issues:
+
 - Missing imports
 - Zotero API types not matching (may need `as any` casts for internal APIs)
 - `PathUtils`, `Components`, `Services` need to come from `zotero-types`
@@ -2597,18 +2675,18 @@ git commit -m "docs: update project status after MVP implementation"
 
 ## Summary
 
-| Task | Focus | TDD | Files |
-|---|---|---|---|
-| 1 | Scaffolding | — | Template config, deps |
-| 2 | Types & Prefs | — | types.ts, prefs.js |
-| 3 | Paragraph Detection | ✅ | paragraph-detect.ts + tests |
-| 4 | Context Resolver | ✅ | context-resolver.ts + tests |
-| 5 | Page Cache + Text Extractor | — | page-cache.ts, text-extractor.ts |
-| 6 | SSE Stream Parser | ✅ | stream-parser.ts + tests |
-| 7 | Prompt Builder + Glossary | ✅ | prompt-builder.ts, glossary.ts + tests |
-| 8 | LLM Service | — | llm-service.ts |
-| 9 | History Store | — | history.ts |
-| 10 | Popup UI | — | popup.ts |
-| 11 | Preferences Panel | — | preferences.xhtml, preferences.ts |
-| 12 | Plugin Wiring | — | hooks.ts, addon.ts, locale files |
-| 13 | Build & Test | — | Build verification, manual testing |
+| Task | Focus                       | TDD | Files                                  |
+| ---- | --------------------------- | --- | -------------------------------------- |
+| 1    | Scaffolding                 | —   | Template config, deps                  |
+| 2    | Types & Prefs               | —   | types.ts, prefs.js                     |
+| 3    | Paragraph Detection         | ✅  | paragraph-detect.ts + tests            |
+| 4    | Context Resolver            | ✅  | context-resolver.ts + tests            |
+| 5    | Page Cache + Text Extractor | —   | page-cache.ts, text-extractor.ts       |
+| 6    | SSE Stream Parser           | ✅  | stream-parser.ts + tests               |
+| 7    | Prompt Builder + Glossary   | ✅  | prompt-builder.ts, glossary.ts + tests |
+| 8    | LLM Service                 | —   | llm-service.ts                         |
+| 9    | History Store               | —   | history.ts                             |
+| 10   | Popup UI                    | —   | popup.ts                               |
+| 11   | Preferences Panel           | —   | preferences.xhtml, preferences.ts      |
+| 12   | Plugin Wiring               | —   | hooks.ts, addon.ts, locale files       |
+| 13   | Build & Test                | —   | Build verification, manual testing     |

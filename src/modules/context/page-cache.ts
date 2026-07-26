@@ -6,11 +6,18 @@ function docKey(itemId: number): string {
   return String(itemId);
 }
 
-export function getCachedPage(itemId: number, pageNumber: number): PageTextData | undefined {
+export function getCachedPage(
+  itemId: number,
+  pageNumber: number,
+): PageTextData | undefined {
   return cache.get(docKey(itemId))?.get(pageNumber);
 }
 
-export function setCachedPage(itemId: number, pageNumber: number, data: PageTextData): void {
+export function setCachedPage(
+  itemId: number,
+  pageNumber: number,
+  data: PageTextData,
+): void {
   const key = docKey(itemId);
   if (!cache.has(key)) {
     cache.set(key, new Map());

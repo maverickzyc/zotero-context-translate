@@ -1,24 +1,24 @@
 {
   "name": "zotero-context-translate",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.3.5",
   "description": "Context-aware translation plugin for Zotero with LLM support",
   "config": {
     "addonName": "Zotero Context Translate",
-    "addonID": "context-translate@zotero.org",
+    "addonID": "zotero-context-translate@maverickzyc.github.io",
     "addonRef": "context-translate",
     "addonInstance": "ContextTranslate",
     "prefsPrefix": "extensions.zotero.contextTranslate"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "git+https://github.com/maverickzyc/zotero-context-translate.git"
   },
-  "author": "windingwind",
+  "author": "张勇晨",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/maverickzyc/zotero-context-translate/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/maverickzyc/zotero-context-translate#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
@@ -30,6 +30,7 @@
     "update-deps": "npm update --save"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "uuid": "^14.0.0",
     "zotero-plugin-toolkit": "^5.1.0-beta.13"
   },

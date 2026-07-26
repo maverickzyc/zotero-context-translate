@@ -17,10 +17,33 @@ interface TextLine {
 }
 
 const ABBREVIATIONS = new Set([
-  "et al", "fig", "figs", "eq", "eqs", "vol", "no",
-  "e.g", "i.e", "vs", "dr", "prof", "mr", "mrs", "ms",
-  "inc", "ltd", "jr", "sr", "dept", "approx", "est",
-  "ref", "refs", "sect", "ch", "pp",
+  "et al",
+  "fig",
+  "figs",
+  "eq",
+  "eqs",
+  "vol",
+  "no",
+  "e.g",
+  "i.e",
+  "vs",
+  "dr",
+  "prof",
+  "mr",
+  "mrs",
+  "ms",
+  "inc",
+  "ltd",
+  "jr",
+  "sr",
+  "dept",
+  "approx",
+  "est",
+  "ref",
+  "refs",
+  "sect",
+  "ch",
+  "pp",
 ]);
 
 export function detectColumns(items: TextItemLike[]): number {
@@ -52,7 +75,10 @@ export function splitSentences(text: string): string[] {
     if (/[.?!]\s*$/.test(tokens[i])) {
       const word = tokens[i].replace(/[.?!]\s*$/, "").toLowerCase();
       // Check single-word abbreviation
-      if (ABBREVIATIONS.has(word) || ABBREVIATIONS.has(word.replace(/\.$/, ""))) {
+      if (
+        ABBREVIATIONS.has(word) ||
+        ABBREVIATIONS.has(word.replace(/\.$/, ""))
+      ) {
         continue;
       }
       // Check two-word abbreviation: look back past any whitespace token to find previous word
@@ -66,7 +92,10 @@ export function splitSentences(text: string): string[] {
         }
       }
       // Decimal numbers: token itself is a decimal (e.g. "0.05") or contains one
-      if (/^\d+\.\d*$/.test(tokens[i].replace(/[?!]\s*$/, "")) || /\d+\.\d+/.test(tokens[i])) {
+      if (
+        /^\d+\.\d*$/.test(tokens[i].replace(/[?!]\s*$/, "")) ||
+        /\d+\.\d+/.test(tokens[i])
+      ) {
         continue;
       }
       sentences.push(current.trim());
@@ -100,7 +129,10 @@ function groupIntoLines(items: TextItemLike[]): TextLine[] {
 }
 
 function lineToText(line: TextLine): string {
-  return line.items.map((it) => it.str).join("").trim();
+  return line.items
+    .map((it) => it.str)
+    .join("")
+    .trim();
 }
 
 export function reconstructParagraphs(items: TextItemLike[]): ParagraphResult {
@@ -124,7 +156,8 @@ export function reconstructParagraphs(items: TextItemLike[]): ParagraphResult {
     const lineHeights = lines.map((l) =>
       l.items.reduce((max, it) => Math.max(max, it.height), 0),
     );
-    const avgLineHeight = lineHeights.reduce((sum, h) => sum + h, 0) / lineHeights.length;
+    const avgLineHeight =
+      lineHeights.reduce((sum, h) => sum + h, 0) / lineHeights.length;
     const paragraphs: string[] = [];
     let currentPara = lineToText(lines[0]);
     for (let i = 1; i < lines.length; i++) {

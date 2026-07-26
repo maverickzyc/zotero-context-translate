@@ -17,7 +17,19 @@ declare namespace _ZoteroTypes {
       "translate.sourceLanguage": string;
       "translate.targetLanguage": string;
       "translate.triggerMode": string;
+      "translate.explicitActionsMigrated": boolean;
+      "translate.wordLookupMode": string;
       "translate.autoMode": boolean;
+      "paper.parser": string;
+      "paper.template": string;
+      "paper.mineruToken": string;
+      "paper.mineruBaseURL": string;
+      "paper.mineruModel": string;
+      "paper.mineruOCR": boolean;
+      "paper.concurrency": number;
+      "paper.maxBatchCharacters": number;
+      "paper.maxOutputTokens": number;
+      "paper.privacyAccepted": boolean;
       "enable": boolean;
     };
   }

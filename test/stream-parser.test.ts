@@ -1,31 +1,34 @@
 import { expect } from "chai";
-import { parseSSEChunk, SSEParser } from "../src/modules/translate/stream-parser";
+import {
+  parseSSEChunk,
+  SSEParser,
+} from "../src/modules/translate/stream-parser";
 
-describe("stream-parser", () => {
-  describe("parseSSEChunk", () => {
-    it("extracts delta content from a data line", () => {
+describe("stream-parser", function () {
+  describe("parseSSEChunk", function () {
+    it("extracts delta content from a data line", function () {
       const line = 'data: {"choices":[{"delta":{"content":"Hello"}}]}';
       expect(parseSSEChunk(line)).to.equal("Hello");
     });
 
-    it("returns null for [DONE] signal", () => {
+    it("returns null for [DONE] signal", function () {
       expect(parseSSEChunk("data: [DONE]")).to.be.null;
     });
 
-    it("returns empty string for empty delta", () => {
+    it("returns empty string for empty delta", function () {
       const line = 'data: {"choices":[{"delta":{}}]}';
       expect(parseSSEChunk(line)).to.equal("");
     });
 
-    it("returns empty string for non-data lines", () => {
+    it("returns empty string for non-data lines", function () {
       expect(parseSSEChunk("")).to.equal("");
       expect(parseSSEChunk(": comment")).to.equal("");
       expect(parseSSEChunk("event: ping")).to.equal("");
     });
   });
 
-  describe("SSEParser", () => {
-    it("accumulates chunks and calls onChunk for each content piece", () => {
+  describe("SSEParser", function () {
+    it("accumulates chunks and calls onChunk for each content piece", function () {
       const chunks: string[] = [];
       const parser = new SSEParser({
         onChunk: (text) => chunks.push(text),
@@ -39,11 +42,13 @@ describe("stream-parser", () => {
       expect(chunks).to.deep.equal(["Hello", " world"]);
     });
 
-    it("calls onDone with full text when [DONE] received", () => {
+    it("calls onDone with full text when [DONE] received", function () {
       let doneText = "";
       const parser = new SSEParser({
         onChunk: () => {},
-        onDone: (text) => { doneText = text; },
+        onDone: (text) => {
+          doneText = text;
+        },
         onError: () => {},
       });
 
@@ -53,7 +58,7 @@ describe("stream-parser", () => {
       expect(doneText).to.equal("Hi");
     });
 
-    it("handles chunks split across feed boundaries", () => {
+    it("handles chunks split across feed boundaries", function () {
       const chunks: string[] = [];
       const parser = new SSEParser({
         onChunk: (text) => chunks.push(text),

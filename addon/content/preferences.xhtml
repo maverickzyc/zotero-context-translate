@@ -1,46 +1,56 @@
-<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-     xmlns:html="http://www.w3.org/1999/xhtml"
-     id="context-translate-prefs"
-     onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })">
-
+<vbox
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  id="context-translate-prefs"
+  onload="Zotero.ContextTranslate.hooks.onPrefsEvent('load', { window })"
+>
   <!-- LLM Configuration -->
   <groupbox>
     <label><html:h2>LLM 配置</html:h2></label>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="服务商" style="width: 100px;"/>
-      <menulist id="context-translate-provider"
-                oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('providerChange', { window, value: this.value })">
+    <hbox align="center" style="margin: 4px 0">
+      <label value="服务商" style="width: 100px" />
+      <menulist
+        id="context-translate-provider"
+        oncommand="
+          Zotero.ContextTranslate.hooks.onPrefsEvent('providerChange', {
+            window,
+            value: this.value,
+          })
+        "
+      >
         <menupopup id="context-translate-provider-popup">
           <!-- Populated dynamically -->
         </menupopup>
       </menulist>
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="API Base URL" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-baseUrl" style="flex: 1;"/>
+    <hbox align="center" style="margin: 4px 0">
+      <label value="API Base URL" style="width: 100px" />
+      <html:input type="text" id="context-translate-baseUrl" style="flex: 1" />
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="API Key" style="width: 100px;"/>
-      <html:input type="password" id="context-translate-apiKey" style="flex: 1;"/>
+    <hbox align="center" style="margin: 4px 0">
+      <label value="API Key" style="width: 100px" />
+      <html:input
+        type="password"
+        id="context-translate-apiKey"
+        style="flex: 1"
+      />
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="Model" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-model" style="flex: 1;"/>
+    <hbox align="center" style="margin: 4px 0">
+      <label value="Model" style="width: 100px" />
+      <html:input type="text" id="context-translate-model" style="flex: 1" />
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="Temperature" style="width: 100px;"/>
-      <html:input type="text" id="context-translate-temperature" style="width: 80px;"/>
-    </hbox>
-
-    <hbox style="margin: 8px 0;">
-      <button label="保存配置"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('saveConfig', { window })"/>
-      <label id="context-translate-save-status" value="" style="color: #4ade80; margin-left: 8px;"/>
+    <hbox align="center" style="margin: 4px 0">
+      <label value="Temperature" style="width: 100px" />
+      <html:input
+        type="text"
+        id="context-translate-temperature"
+        style="width: 80px"
+      />
     </hbox>
   </groupbox>
 
@@ -48,27 +58,156 @@
   <groupbox>
     <label><html:h2>翻译设置</html:h2></label>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="目标语言" style="width: 100px;"/>
-      <menulist id="context-translate-targetLanguage" preference="translate.targetLanguage">
+    <hbox align="center" style="margin: 4px 0">
+      <label value="目标语言" style="width: 100px" />
+      <menulist id="context-translate-targetLanguage">
         <menupopup>
-          <menuitem label="中文（简体）" value="zh-CN"/>
-          <menuitem label="中文（繁體）" value="zh-TW"/>
-          <menuitem label="English" value="en"/>
-          <menuitem label="日本語" value="ja"/>
+          <menuitem label="中文（简体）" value="zh-CN" />
+          <menuitem label="中文（繁體）" value="zh-TW" />
+          <menuitem label="English" value="en" />
+          <menuitem label="日本語" value="ja" />
         </menupopup>
       </menulist>
     </hbox>
 
-    <hbox align="center" style="margin: 4px 0;">
-      <label value="触发方式" style="width: 100px;"/>
-      <menulist id="context-translate-triggerMode" preference="translate.triggerMode">
+    <hbox align="center" style="margin: 4px 0">
+      <label value="触发方式" style="width: 100px" />
+      <menulist id="context-translate-triggerMode">
         <menupopup>
-          <menuitem label="选中自动翻译" value="auto"/>
-          <menuitem label="右键菜单翻译" value="contextmenu"/>
+          <menuitem label="划词显示查词 / 翻译按钮" value="contextmenu" />
+          <menuitem label="选中后自动翻译" value="auto" />
         </menupopup>
       </menulist>
     </hbox>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="单词查词" style="width: 100px" />
+      <menulist id="context-translate-wordLookupMode">
+        <menupopup>
+          <menuitem
+            label="本地词典 + DeepSeek 语境解释"
+            value="dictionary-context"
+          />
+          <menuitem label="仅本地词典（不调用 API）" value="dictionary-only" />
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <description style="margin: 4px 0 0 104px; color: #666">
+      仅对单个英文词生效；短语、句子和段落仍使用当前 LLM 服务翻译。
+    </description>
+  </groupbox>
+
+  <!-- Whole Paper Translation -->
+  <groupbox>
+    <label><html:h2>整篇论文双语 HTML</html:h2></label>
+
+    <description style="margin: 2px 0 8px; color: #666">
+      从条目或 PDF 右键生成自包含双语 HTML，并自动保存为原条目的附件。
+    </description>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="文档解析" style="width: 100px" />
+      <menulist id="context-translate-paper-parser">
+        <menupopup>
+          <menuitem label="自动（有 MinerU Token 时高保真）" value="auto" />
+          <menuitem label="MinerU 高保真（图表/公式/OCR）" value="mineru" />
+          <menuitem
+            label="Zotero 纯文本（不上传 PDF）"
+            value="zotero-fulltext"
+          />
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="HTML 模板" style="width: 100px" />
+      <menulist id="context-translate-paper-template">
+        <menupopup>
+          <menuitem label="学术经典" value="classic" />
+          <menuitem label="极简" value="minimal" />
+          <menuitem label="现代杂志" value="magazine" />
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <separator class="thin" />
+    <label
+      value="MinerU 高保真解析"
+      style="font-weight: 600; margin-top: 6px"
+    />
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="MinerU Token" style="width: 100px" />
+      <html:input
+        type="password"
+        id="context-translate-paper-mineruToken"
+        style="flex: 1"
+      />
+    </hbox>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="MinerU URL" style="width: 100px" />
+      <html:input
+        type="text"
+        id="context-translate-paper-mineruBaseURL"
+        style="flex: 1"
+      />
+    </hbox>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="MinerU 模型" style="width: 100px" />
+      <menulist id="context-translate-paper-mineruModel">
+        <menupopup>
+          <menuitem label="VLM（推荐）" value="vlm" />
+          <menuitem label="Pipeline" value="pipeline" />
+        </menupopup>
+      </menulist>
+      <checkbox
+        id="context-translate-paper-mineruOCR"
+        label="启用 OCR"
+        style="margin-left: 12px"
+      />
+    </hbox>
+
+    <separator class="thin" />
+    <label value="翻译任务" style="font-weight: 600; margin-top: 6px" />
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="并发请求数" style="width: 100px" />
+      <html:input
+        type="number"
+        min="1"
+        max="4"
+        id="context-translate-paper-concurrency"
+        style="width: 80px"
+      />
+      <label value="每批字符数" style="margin-left: 20px" />
+      <html:input
+        type="number"
+        min="4000"
+        step="1000"
+        id="context-translate-paper-maxBatchCharacters"
+        style="width: 100px"
+      />
+    </hbox>
+
+    <hbox align="center" style="margin: 4px 0">
+      <label value="单批最大输出" style="width: 100px" />
+      <html:input
+        type="number"
+        min="2048"
+        step="1024"
+        id="context-translate-paper-maxOutputTokens"
+        style="width: 100px"
+      />
+      <label value="tokens" style="margin-left: 6px" />
+    </hbox>
+
+    <description style="margin-top: 8px; color: #a05a00">
+      隐私提示：LLM 模式会把论文文本发送到当前服务商；MinerU 模式还会上传 PDF
+      文件。
+    </description>
   </groupbox>
 
   <!-- Dictionary -->
@@ -76,17 +215,33 @@
     <label><html:h2>词典管理</html:h2></label>
 
     <hbox align="center">
-      <label id="context-translate-dict-status" value="检查中..."/>
+      <label id="context-translate-dict-status" value="检查中..." />
     </hbox>
 
-    <hbox style="margin: 8px 0;">
-      <button id="context-translate-dict-download-light" label="下载轻量版 (下载约65MB, 转换后约5MB, 5万词)"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', { window, type: 'light' })"/>
-      <button id="context-translate-dict-download-full" label="下载完整版 (下载约65MB, 转换后约50MB, 77万词)"
-              oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', { window, type: 'full' })"/>
+    <hbox style="margin: 8px 0">
+      <button
+        id="context-translate-dict-download-light"
+        label="下载轻量版 (下载约65MB, 转换后约5MB, 5万词)"
+        oncommand="
+          Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', {
+            window,
+            type: 'light',
+          })
+        "
+      />
+      <button
+        id="context-translate-dict-download-full"
+        label="下载完整版 (下载约65MB, 转换后约50MB, 77万词)"
+        oncommand="
+          Zotero.ContextTranslate.hooks.onPrefsEvent('downloadDict', {
+            window,
+            type: 'full',
+          })
+        "
+      />
     </hbox>
 
-    <label id="context-translate-dict-progress" value="" style="color: #888;"/>
+    <label id="context-translate-dict-progress" value="" style="color: #888" />
   </groupbox>
 
   <!-- Glossary -->
@@ -94,11 +249,41 @@
     <label><html:h2>术语表</html:h2></label>
 
     <hbox align="center">
-      <label id="context-translate-glossary-count" value="术语数: 0 条"/>
-      <spacer flex="1"/>
-      <button label="导入 CSV" oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('importGlossary', { window })"/>
-      <button label="导出 CSV" oncommand="Zotero.ContextTranslate.hooks.onPrefsEvent('exportGlossary', { window })"/>
+      <label id="context-translate-glossary-count" value="术语数: 0 条" />
+      <spacer flex="1" />
+      <button
+        label="导入 CSV"
+        oncommand="
+          Zotero.ContextTranslate.hooks.onPrefsEvent('importGlossary', {
+            window,
+          })
+        "
+      />
+      <button
+        label="导出 CSV"
+        oncommand="
+          Zotero.ContextTranslate.hooks.onPrefsEvent('exportGlossary', {
+            window,
+          })
+        "
+      />
     </hbox>
   </groupbox>
 
+  <separator class="thin" />
+  <hbox align="center" pack="end" style="padding: 10px 0 4px">
+    <label
+      id="context-translate-save-status"
+      value=""
+      style="color: #2e7d32; margin-right: 10px"
+    />
+    <button
+      id="context-translate-save-all"
+      label="保存全部设置"
+      default="true"
+      oncommand="
+        Zotero.ContextTranslate.hooks.onPrefsEvent('saveConfig', { window })
+      "
+    />
+  </hbox>
 </vbox>

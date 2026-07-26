@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zotero CSS-only 双语切换测试</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f2eee5;
+        --paper: #fffdf7;
+        --ink: #28231d;
+        --muted: #756d63;
+        --line: #d9d0c3;
+        --accent: #8b3a2b;
+        --accent-soft: #f3e2dc;
+        --zh: #17483d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+        line-height: 1.75;
+      }
+
+      /*
+       * Keep the radios focusable for keyboard users while hiding their native
+       * controls. Labels below provide the visible controls. No JavaScript is
+       * used anywhere in this document.
+       */
+      .mode-control {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: rgba(247, 242, 232, 0.96);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .toolbar-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 74px;
+        padding: 6px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.3;
+        user-select: none;
+      }
+
+      #mode-en:focus-visible ~ .toolbar label[for="mode-en"],
+      #mode-zh:focus-visible ~ .toolbar label[for="mode-zh"],
+      #mode-both:focus-visible ~ .toolbar label[for="mode-both"] {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      #mode-en:checked ~ .toolbar label[for="mode-en"],
+      #mode-zh:checked ~ .toolbar label[for="mode-zh"],
+      #mode-both:checked ~ .toolbar label[for="mode-both"] {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .mode-status {
+        margin-left: 8px;
+        color: var(--muted);
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 12px;
+      }
+
+      .mode-status::after {
+        display: inline-block;
+        min-width: 64px;
+        margin-left: 4px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      #mode-en:checked ~ .toolbar .mode-status::after {
+        content: "English";
+      }
+
+      #mode-zh:checked ~ .toolbar .mode-status::after {
+        content: "中文";
+      }
+
+      #mode-both:checked ~ .toolbar .mode-status::after {
+        content: "双语";
+      }
+
+      main {
+        max-width: 860px;
+        margin: 30px auto 80px;
+        padding: 48px 72px;
+        background: var(--paper);
+        box-shadow: 0 12px 44px rgba(63, 45, 27, 0.08);
+      }
+
+      .test-note {
+        margin: 0 0 2.5rem;
+        padding: 12px 16px;
+        border: 1px solid #dfc0b5;
+        border-radius: 8px;
+        background: var(--accent-soft);
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+      }
+
+      h1 {
+        margin: 0 0 1rem;
+        font-size: 2.25rem;
+        line-height: 1.25;
+      }
+
+      h1 > span {
+        display: block;
+      }
+
+      h1 > .zh {
+        margin-top: 0.2em;
+        font-size: 0.88em;
+      }
+
+      h2 {
+        margin-top: 2.4rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+        font-size: 1.45rem;
+      }
+
+      .meta {
+        margin-bottom: 2.5rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .pair {
+        margin: 1.25rem 0;
+      }
+
+      .pair p {
+        margin: 0.4rem 0;
+      }
+
+      .zh {
+        color: var(--zh);
+      }
+
+      table {
+        width: 100%;
+        margin: 1.2rem 0;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 9px 12px;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eee7dc;
+      }
+
+      /* Language state is driven entirely by the checked radio. */
+      #mode-en:checked ~ main .zh {
+        display: none !important;
+      }
+
+      #mode-zh:checked ~ main .en:not(.en-always) {
+        display: none !important;
+      }
+
+      @media (max-width: 720px) {
+        .toolbar {
+          flex-wrap: wrap;
+        }
+
+        .mode-status {
+          width: 100%;
+          margin: 0;
+          text-align: center;
+        }
+
+        main {
+          margin: 0;
+          padding: 28px 20px;
+          box-shadow: none;
+        }
+
+        h1 {
+          font-size: 1.7rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      class="mode-control"
+      id="mode-en"
+      type="radio"
+      name="language-mode"
+    />
+    <input
+      class="mode-control"
+      id="mode-zh"
+      type="radio"
+      name="language-mode"
+    />
+    <input
+      class="mode-control"
+      id="mode-both"
+      type="radio"
+      name="language-mode"
+      checked
+    />
+
+    <nav class="toolbar" aria-label="语言显示模式">
+      <label class="toolbar-label" for="mode-en">English</label>
+      <label class="toolbar-label" for="mode-zh">中文</label>
+      <label class="toolbar-label" for="mode-both">双语</label>
+      <span class="mode-status">当前模式：</span>
+    </nav>
+
+    <main>
+      <p class="test-note en-always">
+        这是 CSS-only
+        验证文件。点击顶部三个选项后，如果正文语言和“当前模式”同步变化，说明该方案可以在
+        Zotero HTML Snapshot Reader 中工作。
+      </p>
+
+      <header>
+        <h1>
+          <span class="en">Teacher agency and spaces in education policy</span>
+          <span class="zh">教育政策变迁中的教师能动性与空间</span>
+        </h1>
+        <div class="meta">
+          CSS-only bilingual HTML prototype · 无 JavaScript
+        </div>
+      </header>
+
+      <section class="pair">
+        <p class="en">
+          This paragraph represents the English source text. Switching to
+          Chinese mode should hide it, while bilingual mode should display both
+          versions.
+        </p>
+        <p class="zh">
+          这一段代表中文译文。切换到英文模式时它应当隐藏，切换到双语模式时两种语言应当同时显示。
+        </p>
+      </section>
+
+      <h2>
+        <span class="en">Results</span>
+        <span class="zh">研究结果</span>
+      </h2>
+
+      <section class="pair">
+        <p class="en">
+          The controls use native radio-button state and CSS sibling selectors,
+          so they do not depend on scripts or inline event handlers.
+        </p>
+        <p class="zh">
+          这些控件通过原生单选状态与 CSS
+          兄弟选择器工作，因此不依赖脚本或内联事件处理器。
+        </p>
+      </section>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="en">Mode</th>
+            <th class="zh">模式</th>
+            <th class="en-always">Expected result / 预期结果</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="en">English</td>
+            <td class="zh">英文</td>
+            <td class="en-always">Only English source text is visible</td>
+          </tr>
+          <tr>
+            <td class="en">Chinese</td>
+            <td class="zh">中文</td>
+            <td class="en-always">只显示中文译文</td>
+          </tr>
+          <tr>
+            <td class="en">Bilingual</td>
+            <td class="zh">双语</td>
+            <td class="en-always">Both versions / 两种语言同时显示</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+  </body>
+</html>

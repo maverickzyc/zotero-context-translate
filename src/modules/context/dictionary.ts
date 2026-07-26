@@ -23,8 +23,7 @@ let loadPromise: Promise<void> | null = null;
 function getProfileDictPath(): string {
   const profileDir = (Zotero as any).Profile.dir;
   // profileDir may be an nsIFile; normalise to a string path
-  const dirPath =
-    typeof profileDir === "string" ? profileDir : profileDir.path;
+  const dirPath = typeof profileDir === "string" ? profileDir : profileDir.path;
   return `${dirPath}/context-translate-dict.json`;
 }
 
@@ -143,14 +142,19 @@ export async function downloadDictionary(
     try {
       Zotero.log(`[ContextTranslate] Trying CSV: ${url}`, "warning");
       const r = await fetch(url);
-      if (r.ok) { response = r; break; }
+      if (r.ok) {
+        response = r;
+        break;
+      }
     } catch (err: any) {
       Zotero.log(`[ContextTranslate] Failed: ${err?.message}`, "warning");
     }
   }
 
   if (!response) {
-    throw new Error("CSV 下载失败，请检查网络。也可手动下载 ecdict.csv 并转换后放到 Zotero Profile 目录。");
+    throw new Error(
+      "CSV 下载失败，请检查网络。也可手动下载 ecdict.csv 并转换后放到 Zotero Profile 目录。",
+    );
   }
 
   onProgress?.(5);
@@ -177,7 +181,8 @@ export async function downloadDictionary(
     const oxford = parseInt(cols[6]) || 0;
     const tag = cols[7] || "";
 
-    if (!word || !translation || word.includes(" ") || !/^[a-z]/.test(word)) continue;
+    if (!word || !translation || word.includes(" ") || !/^[a-z]/.test(word))
+      continue;
 
     if (type === "light") {
       if (!bnc && !frq && !collins && !oxford && !tag) continue;
@@ -210,9 +215,14 @@ function _parseCSVLine(line: string): string[] {
   let inQ = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"') { inQ = !inQ; }
-    else if (ch === "," && !inQ) { result.push(cur); cur = ""; }
-    else { cur += ch; }
+    if (ch === '"') {
+      inQ = !inQ;
+    } else if (ch === "," && !inQ) {
+      result.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
   }
   result.push(cur);
   return result;
@@ -229,12 +239,12 @@ export function lookupWord(word: string): DictEntry | null {
   };
 }
 
+export function isDictionaryLookupCandidate(text: string): boolean {
+  const normalized = text.trim();
+  return /^[A-Za-z]+(?:[’'][A-Za-z]+)*(?:-[A-Za-z]+)*$/.test(normalized);
+}
+
 export function lookupPhrase(text: string): DictEntry | null {
-  const exact = lookupWord(text);
-  if (exact) return exact;
-  const words = text.trim().split(/\s+/);
-  if (words.length > 1 && words.length <= 3) {
-    return lookupWord(words[0]);
-  }
-  return null;
+  if (!isDictionaryLookupCandidate(text)) return null;
+  return lookupWord(text);
 }

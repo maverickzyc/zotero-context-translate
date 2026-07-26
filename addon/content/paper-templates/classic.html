@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{TITLE}}</title>
+    <style>
+      :root {
+        --bg: #f7f2e8;
+        --paper: #fffdf7;
+        --ink: #28231d;
+        --muted: #786f65;
+        --line: #d9d0c3;
+        --accent: #8b3a2b;
+        --zh: #183f36;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Georgia, "Noto Serif SC", serif;
+        line-height: 1.78;
+      }
+      .reader-layout {
+        display: grid;
+        grid-template-columns: 104px minmax(0, 860px);
+        align-items: start;
+        justify-content: center;
+        gap: 20px;
+        padding: 30px 20px 80px;
+      }
+      .toolbar {
+        position: sticky;
+        top: 24px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(63, 45, 27, 0.08);
+      }
+      .mode-control {
+        position: fixed;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .toolbar-label {
+        border: 1px solid var(--line);
+        background: var(--paper);
+        padding: 7px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--ink);
+        text-align: center;
+      }
+      #mode-en:checked ~ .reader-layout .toolbar label[for="mode-en"],
+      #mode-zh:checked ~ .reader-layout .toolbar label[for="mode-zh"],
+      #mode-both:checked ~ .reader-layout .toolbar label[for="mode-both"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      #mode-en:focus-visible ~ .reader-layout .toolbar label[for="mode-en"],
+      #mode-zh:focus-visible ~ .reader-layout .toolbar label[for="mode-zh"],
+      #mode-both:focus-visible
+        ~ .reader-layout
+        .toolbar
+        label[for="mode-both"] {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      main {
+        width: 100%;
+        margin: 0;
+        padding: 48px 72px;
+        background: var(--paper);
+        box-shadow: 0 12px 44px rgba(63, 45, 27, 0.08);
+      }
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      h1 {
+        font-size: 2.3rem;
+        line-height: 1.25;
+        margin: 0 0 1rem;
+      }
+      h2 {
+        font-size: 1.55rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 0.35rem;
+        margin-top: 2.6rem;
+      }
+      h3 {
+        font-size: 1.18rem;
+        margin-top: 2rem;
+      }
+      .bilingual-block > .en,
+      .bilingual-block > .zh {
+        display: block;
+      }
+      .bilingual-block > .zh {
+        margin-top: 0.2em;
+      }
+      h1.bilingual-block > .zh {
+        font-size: 0.88em;
+      }
+      .pair {
+        margin: 1.2rem 0;
+      }
+      .pair p {
+        margin: 0.35rem 0;
+      }
+      .zh {
+        color: var(--zh);
+      }
+      blockquote {
+        margin: 1.5rem 1rem;
+        padding: 0.6rem 1.2rem;
+        border-left: 3px solid var(--accent);
+        background: #f8f1e8;
+      }
+      figure {
+        margin: 2rem auto;
+        text-align: center;
+      }
+      figure img {
+        max-width: 100%;
+        height: auto;
+      }
+      figcaption,
+      .caption {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      .reference {
+        font-size: 0.9rem;
+        margin: 0.35rem 0;
+        padding-left: 2em;
+        text-indent: -2em;
+      }
+      .formula,
+      .table-fallback {
+        overflow: auto;
+        padding: 1rem;
+        background: #f3eee5;
+        border: 1px solid var(--line);
+      }
+      .table-wrap {
+        overflow: auto;
+        margin: 1rem 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 0.5rem;
+        vertical-align: top;
+      }
+      th {
+        background: #eee7dc;
+      }
+      #mode-en:checked ~ .reader-layout main .zh {
+        display: none !important;
+      }
+      #mode-zh:checked ~ .reader-layout main .en:not(.en-always) {
+        display: none !important;
+      }
+      @media (max-width: 1040px) {
+        .reader-layout {
+          display: block;
+          padding: 16px 0 0;
+        }
+        .toolbar {
+          position: static;
+          width: max-content;
+          max-width: calc(100% - 32px);
+          margin: 0 auto 16px;
+          flex-direction: row;
+          justify-content: center;
+        }
+        main {
+          max-width: 860px;
+          margin: 0 auto 80px;
+        }
+      }
+      @media (max-width: 720px) {
+        main {
+          margin: 0;
+          padding: 28px 20px;
+          box-shadow: none;
+        }
+        h1 {
+          font-size: 1.7rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-en"
+    />
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-zh"
+    />
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-both"
+      checked
+    />
+    <div class="reader-layout">
+      <nav class="toolbar" aria-label="语言显示">
+        <label class="toolbar-label" for="mode-en">English</label>
+        <label class="toolbar-label" for="mode-zh">中文</label>
+        <label class="toolbar-label" for="mode-both">双语</label>
+      </nav>
+      <main>
+        <header><div class="meta">{{META}}</div></header>
+        {{BODY}}
+      </main>
+    </div>
+  </body>
+</html>

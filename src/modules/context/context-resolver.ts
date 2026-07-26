@@ -82,7 +82,6 @@ export function resolveContext(
     level,
     selected: selected.trim(),
     context,
-    paragraphIndex:
-      paragraphIndex !== undefined ? paragraphIndex : undefined,
+    paragraphIndex: paragraphIndex !== undefined ? paragraphIndex : undefined,
   };
 }

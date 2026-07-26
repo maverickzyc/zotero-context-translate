@@ -29,6 +29,12 @@ export interface GlossaryData {
   entries: GlossaryEntry[];
 }
 
+export interface HistoryDictionaryResult {
+  phonetic: string;
+  translation: string;
+  pos: string;
+}
+
 export interface HistoryRecord {
   id: string;
   selected: string;
@@ -38,6 +44,9 @@ export interface HistoryRecord {
   itemId: string;
   page: number;
   timestamp: number;
+  operation?: "lookup" | "phrase-translation" | "translation";
+  dictionary?: HistoryDictionaryResult;
+  dictionaryOnly?: boolean;
 }
 
 export interface HistoryData {

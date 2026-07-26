@@ -3,7 +3,9 @@ dist/
 build/
 .scaffold/
 *.xpi
-!releases/**/*.xpi
+*.tsbuildinfo
+*.textClipping
+coverage/
 .DS_Store
 .superpowers/
 *.log

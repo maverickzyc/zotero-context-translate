@@ -7,8 +7,9 @@ A Zotero 8/9 translation plugin with **context-aware translation**: automaticall
 - **Plugin type**: Independent Zotero plugin (bootstrapped extension, XPI)
 - **Target users**: Chinese researchers reading English academic papers
 - **Key differentiator**: Context extraction + two-stage rendering (dict + LLM) vs. zotero-pdf-translate which only translates selected text
-- **Current version**: 0.0.1
-- **Compatibility**: Zotero 8.0 ~ 9.* (Firefox 140 ESR)
+- **Current version**: 0.3.5
+- **Compatibility**: Zotero 8.0 ~ 9.0.\*; primary integration target Zotero
+  9.0.6
 
 ## Tech Stack
 
@@ -26,20 +27,21 @@ A Zotero 8/9 translation plugin with **context-aware translation**: automaticall
 npm run build    # Build plugin → .scaffold/build/zotero-context-translate.xpi
 npm run start    # Dev mode: build + install to Zotero + hot reload (requires .env)
 npm run test     # Run tests inside Zotero
-npx mocha --require tsx test/*.test.ts   # Run unit tests locally
+node --import=tsx node_modules/mocha/bin/mocha.js "test/*.test.ts" --ignore test/startup.test.ts
 ```
 
 `.env` must contain:
+
 ```
 ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /Applications/Zotero.app/Contents/MacOS/zotero
-ZOTERO_PLUGIN_PROFILE_PATH = /Users/yongchen/Documents/Zotero-Dev
+ZOTERO_PLUGIN_PROFILE_PATH = /path/to/zotero-dev-profile
 ```
 
 ## Project Structure
 
 ```
 ├── addon/                          # Plugin resources (packaged into XPI)
-│   ├── manifest.json               # WebExtension manifest (strict_min: 8.0, max: 9.*)
+│   ├── manifest.json               # WebExtension manifest (strict_min: 8.0, max: 9.0.*)
 │   ├── bootstrap.js                # Zotero bootstrap entry
 │   ├── prefs.js                    # Default preferences
 │   ├── dict/ecdict-subset.json     # Bundled lightweight dictionary (50K entries, 3.8MB)
@@ -125,13 +127,13 @@ User selects text → renderTextSelectionPopup event
 
 ### Critical technical decisions
 
-| Decision | Rationale |
-|---|---|
-| `iframeWin.eval()` for PDF text | Cross-compartment sandbox blocks direct pdf.js API access ("Permission denied") |
-| `params.annotation.text` for selection | `getSelectedText(reader)` returns `[object Object]` in Zotero 9 |
-| Popup in main window document | Reader iframe mouse events don't propagate to div overlays |
-| `---` separator in prompts | Single LLM call splits into translation + analysis zones via stream detection |
-| `screenX/screenY` via `mozInnerScreenX` | Convert reader iframe coords to main window fixed positioning |
+| Decision                                | Rationale                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| `iframeWin.eval()` for PDF text         | Cross-compartment sandbox blocks direct pdf.js API access ("Permission denied") |
+| `params.annotation.text` for selection  | `getSelectedText(reader)` returns `[object Object]` in Zotero 9                 |
+| Popup in main window document           | Reader iframe mouse events don't propagate to div overlays                      |
+| `---` separator in prompts              | Single LLM call splits into translation + analysis zones via stream detection   |
+| `screenX/screenY` via `mozInnerScreenX` | Convert reader iframe coords to main window fixed positioning                   |
 
 ## Coding Standards
 
@@ -155,7 +157,7 @@ User selects text → renderTextSelectionPopup event
 
 6. **Preferences XHTML** — Must use `<vbox>` root (not `<html>`), labels via `value=""` attribute (not `data-l10n-id` which caused "not well-formed XML" errors).
 
-## Current Status (v0.0.1)
+## Current Status (v0.3.5)
 
 - [x] Core: context-aware translation (word/sentence/paragraph levels)
 - [x] Two-stage rendering: offline dictionary + LLM streaming
@@ -168,15 +170,23 @@ User selects text → renderTextSelectionPopup event
 - [x] Glossary system with token-budget injection + CSV import/export
 - [x] Dictionary management (bundled 50K + downloadable 770K)
 - [x] Settings panel: LLM config, trigger mode, dictionary, glossary
-- [x] 32 unit tests passing
-- [x] XPI packaged (1.4MB)
+- [x] Whole-paper bilingual HTML translation from library items and PDF tabs
+- [x] MinerU high-fidelity parsing + Zotero full-text fallback
+- [x] Resumable batched translation jobs with validation and protected citations
+- [x] Classic/minimal/magazine self-contained HTML templates
+- [x] Automatic HTML child-attachment import into the source Zotero item
+- [x] Original skill's 483-term glossary bundled with per-library overrides
+- [x] Unified history and paper-job workbench with live task updates
+- [x] 63 pure unit tests passing
+- [x] 73 tests passing inside the installed Zotero 9.0.6 runtime
+- [x] XPI packaged
 
-## Next Steps (potential v0.1.0)
+## Next Steps
 
 - [ ] Keyboard shortcut to trigger translation
 - [ ] Side panel for translation history (instead of popup inline)
 - [ ] Auto-detect and suggest glossary terms from translation results
 - [ ] Support EPUB reader (not just PDF)
 - [ ] Zotero note integration (save translations to notes)
-- [ ] Publish to GitHub with CI/CD release pipeline
+- [x] Publish to GitHub with CI/CD release pipeline
 - [ ] Write user-facing README with screenshots

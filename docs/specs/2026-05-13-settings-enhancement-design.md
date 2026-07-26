@@ -9,7 +9,7 @@
 
 ```ts
 interface LLMPreset {
-  name: string;       // "GPT-4o", "DeepSeek", "Ollama"
+  name: string; // "GPT-4o", "DeepSeek", "Ollama"
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -18,6 +18,7 @@ interface LLMPreset {
 ```
 
 存储在 Zotero Prefs:
+
 - `prefsPrefix.llm.presets` — JSON 字符串，`LLMPreset[]`
 - `prefsPrefix.llm.activeIndex` — number，当前激活的预设索引
 
@@ -41,9 +42,9 @@ XPI 不再捆绑 `addon/dict/ecdict-subset.json`（从打包中移除）。词�
 
 ### 下载选项
 
-| 版本 | 词条数 | 大小 | 说明 |
-|---|---|---|---|
-| 轻量版 | ~50,000 | ~4MB | 学术高频词 |
+| 版本   | 词条数   | 大小  | 说明        |
+| ------ | -------- | ----- | ----------- |
+| 轻量版 | ~50,000  | ~4MB  | 学术高频词  |
 | 完整版 | ~770,000 | ~30MB | ECDICT 全量 |
 
 下载源：GitHub Release URL（可在设置中自定义镜像地址）。
@@ -51,6 +52,7 @@ XPI 不再捆绑 `addon/dict/ecdict-subset.json`（从打包中移除）。词�
 ### 设置面板
 
 显示当前词典状态：
+
 - "未安装" — 显示两个下载按钮
 - "轻量版 (50,000 词)" — 显示"升级到完整版"按钮
 - "完整版 (770,000 词)" — 显示已安装
@@ -120,13 +122,13 @@ const cache = new Map<string, CacheEntry>();
 
 ## 5. 文件变更清单
 
-| 文件 | 变更 |
-|---|---|
-| `src/modules/translate/llm-service.ts` | 从 presets 读取配置 |
-| `src/modules/context/dictionary.ts` | 从 profile 目录加载，支持下载 |
-| `src/modules/ui/popup.ts` | 模型切换按钮、缓存标签 |
-| `src/modules/ui/preferences.ts` | 预设管理、词典下载、触发方式 |
-| `addon/content/preferences.xhtml` | 新增预设列表、词典区域、触发方式 |
-| `addon/prefs.js` | 新增 presets/activeIndex/triggerMode |
-| `src/hooks.ts` | 缓存逻辑、右键菜单注册、触发模式分支 |
-| `src/modules/context/translate-cache.ts` | 新文件：翻译结果缓存 |
+| 文件                                     | 变更                                 |
+| ---------------------------------------- | ------------------------------------ |
+| `src/modules/translate/llm-service.ts`   | 从 presets 读取配置                  |
+| `src/modules/context/dictionary.ts`      | 从 profile 目录加载，支持下载        |
+| `src/modules/ui/popup.ts`                | 模型切换按钮、缓存标签               |
+| `src/modules/ui/preferences.ts`          | 预设管理、词典下载、触发方式         |
+| `addon/content/preferences.xhtml`        | 新增预设列表、词典区域、触发方式     |
+| `addon/prefs.js`                         | 新增 presets/activeIndex/triggerMode |
+| `src/hooks.ts`                           | 缓存逻辑、右键菜单注册、触发模式分支 |
+| `src/modules/context/translate-cache.ts` | 新文件：翻译结果缓存                 |

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{TITLE}}</title>
+    <style>
+      :root {
+        --bg: #eef0f4;
+        --card: #fff;
+        --ink: #17191f;
+        --muted: #6c717d;
+        --line: #dfe2e8;
+        --accent: #d94f32;
+        --zh: #183a6b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          17px/1.72 "Avenir Next",
+          "Noto Sans SC",
+          sans-serif;
+      }
+      .reader-layout {
+        display: grid;
+        grid-template-columns: 104px minmax(0, 940px);
+        align-items: start;
+        justify-content: center;
+        gap: 24px;
+        padding: 32px 20px 80px;
+      }
+      .toolbar {
+        position: sticky;
+        top: 24px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        background: #17191f;
+        border-radius: 8px;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
+      }
+      .mode-control {
+        position: fixed;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .toolbar-label {
+        border: 1px solid #3b3e47;
+        background: transparent;
+        color: #bbb;
+        padding: 7px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+      }
+      #mode-en:checked ~ .reader-layout .toolbar label[for="mode-en"],
+      #mode-zh:checked ~ .reader-layout .toolbar label[for="mode-zh"],
+      #mode-both:checked ~ .reader-layout .toolbar label[for="mode-both"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      #mode-en:focus-visible ~ .reader-layout .toolbar label[for="mode-en"],
+      #mode-zh:focus-visible ~ .reader-layout .toolbar label[for="mode-zh"],
+      #mode-both:focus-visible
+        ~ .reader-layout
+        .toolbar
+        label[for="mode-both"] {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      main {
+        width: 100%;
+        margin: 0;
+        padding: 58px 76px;
+        background: var(--card);
+        box-shadow: 0 15px 45px rgba(30, 35, 45, 0.1);
+      }
+      header {
+        margin-bottom: 2.5rem;
+      }
+      .meta {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      h1 {
+        font-family: Georgia, "Noto Serif SC", serif;
+        font-size: 3rem;
+        line-height: 1.08;
+        margin-bottom: 1.5rem;
+      }
+      h2 {
+        font-size: 1.6rem;
+        margin-top: 3rem;
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .bilingual-block > .en,
+      .bilingual-block > .zh {
+        display: block;
+      }
+      .bilingual-block > .zh {
+        margin-top: 0.2em;
+      }
+      h1.bilingual-block > .zh {
+        font-size: 0.88em;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        padding: 1.15rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .pair p {
+        margin: 0;
+      }
+      .zh {
+        color: var(--zh);
+      }
+      blockquote {
+        margin: 2rem 0;
+        padding: 1.3rem 1.6rem;
+        background: #f7f1ee;
+        border-left: 5px solid var(--accent);
+      }
+      figure {
+        margin: 2.5rem -20px;
+        text-align: center;
+      }
+      figure img {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12);
+      }
+      .caption,
+      figcaption {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .reference {
+        font-size: 0.85rem;
+        padding-left: 2em;
+        text-indent: -2em;
+      }
+      .formula,
+      .table-fallback {
+        overflow: auto;
+        padding: 1rem;
+        background: #f4f5f7;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 0.55rem;
+      }
+      th {
+        background: #f4f5f7;
+      }
+      #mode-en:checked ~ .reader-layout main .zh {
+        display: none !important;
+      }
+      #mode-en:checked ~ .reader-layout main .pair {
+        display: block;
+      }
+      #mode-zh:checked ~ .reader-layout main .en:not(.en-always) {
+        display: none !important;
+      }
+      #mode-zh:checked ~ .reader-layout main .pair {
+        display: block;
+      }
+      @media (max-width: 1120px) {
+        .reader-layout {
+          display: block;
+          padding: 16px 0 0;
+        }
+        .toolbar {
+          position: static;
+          width: max-content;
+          max-width: calc(100% - 32px);
+          margin: 0 auto 16px;
+          flex-direction: row;
+          justify-content: center;
+        }
+        main {
+          max-width: 940px;
+          margin: 0 auto 80px;
+        }
+      }
+      @media (max-width: 760px) {
+        main {
+          margin: 0;
+          padding: 34px 20px;
+        }
+        .pair {
+          display: block;
+        }
+        .pair .zh {
+          margin-top: 0.6rem;
+        }
+        h1 {
+          font-size: 2.1rem;
+        }
+        figure {
+          margin: 2rem 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-en"
+    />
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-zh"
+    />
+    <input
+      class="mode-control"
+      type="radio"
+      name="language-mode"
+      id="mode-both"
+      checked
+    />
+    <div class="reader-layout">
+      <nav class="toolbar" aria-label="语言显示">
+        <label class="toolbar-label" for="mode-en">English</label>
+        <label class="toolbar-label" for="mode-zh">中文</label>
+        <label class="toolbar-label" for="mode-both">双语</label>
+      </nav>
+      <main>
+        <header><div class="meta">{{META}}</div></header>
+        {{BODY}}
+      </main>
+    </div>
+  </body>
+</html>

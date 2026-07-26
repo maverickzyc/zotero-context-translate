@@ -4,10 +4,11 @@ import { getCachedPage, setCachedPage } from "./page-cache";
 
 // Explore the reader object tree to find pdf.js access paths
 export function debugReaderStructure(reader: any): void {
-  const log = (msg: string) => Zotero.log(`[ContextTranslate] ${msg}`, "warning");
+  const log = (msg: string) =>
+    Zotero.log(`[ContextTranslate] ${msg}`, "warning");
 
   try {
-    const readerKeys = Object.keys(reader).filter(k => k.startsWith("_"));
+    const readerKeys = Object.keys(reader).filter((k) => k.startsWith("_"));
     log(`reader keys: [${readerKeys.join(", ")}]`);
 
     // Check _iframeWindow path
@@ -16,24 +17,42 @@ export function debugReaderStructure(reader: any): void {
       log(`_iframeWindow exists, type: ${typeof ifw}`);
       const wrapped = ifw.wrappedJSObject;
       if (wrapped) {
-        const wrappedKeys = Object.keys(wrapped).filter(k => k.startsWith("_") || k === "PDFViewerApplication");
+        const wrappedKeys = Object.keys(wrapped).filter(
+          (k) => k.startsWith("_") || k === "PDFViewerApplication",
+        );
         log(`_iframeWindow.wrappedJSObject keys: [${wrappedKeys.join(", ")}]`);
 
         if (wrapped._reader) {
-          const irKeys = Object.keys(wrapped._reader).filter(k => k.startsWith("_"));
+          const irKeys = Object.keys(wrapped._reader).filter((k) =>
+            k.startsWith("_"),
+          );
           log(`wrappedJSObject._reader keys: [${irKeys.join(", ")}]`);
 
           const pv = wrapped._reader._primaryView;
           if (pv) {
-            const pvKeys = Object.keys(pv).filter(k => k.startsWith("_") || k === "pdfDocument");
+            const pvKeys = Object.keys(pv).filter(
+              (k) => k.startsWith("_") || k === "pdfDocument",
+            );
             log(`_primaryView keys: [${pvKeys.join(", ")}]`);
 
             if (pv._iframeWindow) {
               const pvIfw = pv._iframeWindow;
-              const pvIfwKeys = Object.keys(pvIfw).filter(k => k.includes("PDF") || k.includes("pdf") || k.includes("viewer"));
-              log(`_primaryView._iframeWindow keys (PDF-related): [${pvIfwKeys.join(", ")}]`);
+              const pvIfwKeys = Object.keys(pvIfw).filter(
+                (k) =>
+                  k.includes("PDF") ||
+                  k.includes("pdf") ||
+                  k.includes("viewer"),
+              );
+              log(
+                `_primaryView._iframeWindow keys (PDF-related): [${pvIfwKeys.join(", ")}]`,
+              );
               if (pvIfw.PDFViewerApplication) {
-                const pvaKeys = Object.keys(pvIfw.PDFViewerApplication).filter(k => k.includes("pdf") || k.includes("document") || k.includes("page"));
+                const pvaKeys = Object.keys(pvIfw.PDFViewerApplication).filter(
+                  (k) =>
+                    k.includes("pdf") ||
+                    k.includes("document") ||
+                    k.includes("page"),
+                );
                 log(`PDFViewerApplication keys: [${pvaKeys.join(", ")}]`);
               }
             }
@@ -77,11 +96,17 @@ function getInternalReader(iframeWindow: any): any {
 function findPDFDocument(reader: any): any {
   // Try multiple known paths to find the pdf.js PDFDocumentProxy
   const paths = [
-    () => reader._iframeWindow?.wrappedJSObject?._reader?._primaryView?._iframeWindow?.PDFViewerApplication?.pdfDocument,
-    () => reader._iframeWindow?.wrappedJSObject?._reader?._primaryView?.pdfDocument,
-    () => reader._iframeWindow?.wrappedJSObject?.PDFViewerApplication?.pdfDocument,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?._reader?._primaryView
+        ?._iframeWindow?.PDFViewerApplication?.pdfDocument,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?._reader?._primaryView?.pdfDocument,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?.PDFViewerApplication?.pdfDocument,
     () => reader._iframeWindow?.PDFViewerApplication?.pdfDocument,
-    () => reader._internalReader?._primaryView?._iframeWindow?.PDFViewerApplication?.pdfDocument,
+    () =>
+      reader._internalReader?._primaryView?._iframeWindow?.PDFViewerApplication
+        ?.pdfDocument,
     () => reader._internalReader?._primaryView?.pdfDocument,
   ];
 
@@ -91,24 +116,36 @@ function findPDFDocument(reader: any): any {
       if (doc && typeof doc.getPage === "function") {
         return doc;
       }
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
   return null;
 }
 
 function findCurrentPageNumber(reader: any): number | null {
   const paths = [
-    () => reader._iframeWindow?.wrappedJSObject?._reader?._primaryView?._iframeWindow?.PDFViewerApplication?.pdfViewer?.currentPageNumber,
-    () => reader._iframeWindow?.wrappedJSObject?._reader?._primaryView?.currentPageIndex,
-    () => reader._iframeWindow?.wrappedJSObject?.PDFViewerApplication?.pdfViewer?.currentPageNumber,
-    () => reader._internalReader?._primaryView?._iframeWindow?.PDFViewerApplication?.pdfViewer?.currentPageNumber,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?._reader?._primaryView
+        ?._iframeWindow?.PDFViewerApplication?.pdfViewer?.currentPageNumber,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?._reader?._primaryView
+        ?.currentPageIndex,
+    () =>
+      reader._iframeWindow?.wrappedJSObject?.PDFViewerApplication?.pdfViewer
+        ?.currentPageNumber,
+    () =>
+      reader._internalReader?._primaryView?._iframeWindow?.PDFViewerApplication
+        ?.pdfViewer?.currentPageNumber,
   ];
 
   for (const tryPath of paths) {
     try {
       const num = tryPath();
       if (typeof num === "number" && num > 0) return num;
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
   return null;
 }
@@ -119,17 +156,19 @@ export function getSelectedText(reader: any): string | null {
     const internalReader = getInternalReader(iframeWindow);
     const selectionRanges = internalReader?._primaryView?._selectionRanges;
     if (!selectionRanges || selectionRanges.length === 0) return null;
-    return selectionRanges
-      .map((range: any) => {
-        if (typeof range === "string") return range;
-        if (typeof range?.toString === "function") {
-          const s = range.toString();
-          if (s && !s.includes("[object")) return s;
-        }
-        return "";
-      })
-      .join(" ")
-      .trim() || null;
+    return (
+      selectionRanges
+        .map((range: any) => {
+          if (typeof range === "string") return range;
+          if (typeof range?.toString === "function") {
+            const s = range.toString();
+            if (s && !s.includes("[object")) return s;
+          }
+          return "";
+        })
+        .join(" ")
+        .trim() || null
+    );
   } catch {
     return null;
   }
@@ -139,12 +178,17 @@ export function getCurrentPageNumber(reader: any): number | null {
   return findCurrentPageNumber(reader);
 }
 
-async function extractPageTextItems(reader: any, pageNumber: number): Promise<TextItemLike[]> {
-  const log = (msg: string) => Zotero.log(`[ContextTranslate] ${msg}`, "warning");
+async function extractPageTextItems(
+  reader: any,
+  pageNumber: number,
+): Promise<TextItemLike[]> {
+  const log = (msg: string) =>
+    Zotero.log(`[ContextTranslate] ${msg}`, "warning");
 
   // Find the pdf.js iframe window where PDFViewerApplication lives
-  const primaryView = reader._iframeWindow?.wrappedJSObject?._reader?._primaryView
-    || reader._internalReader?._primaryView;
+  const primaryView =
+    reader._iframeWindow?.wrappedJSObject?._reader?._primaryView ||
+    reader._internalReader?._primaryView;
   const iframeWin = primaryView?._iframeWindow;
 
   if (!iframeWin) {
@@ -192,7 +236,11 @@ async function extractPageTextItems(reader: any, pageNumber: number): Promise<Te
   }
 }
 
-export async function getPageText(reader: any, itemId: number, pageNumber: number): Promise<PageTextData> {
+export async function getPageText(
+  reader: any,
+  itemId: number,
+  pageNumber: number,
+): Promise<PageTextData> {
   const cached = getCachedPage(itemId, pageNumber);
   if (cached) return cached;
   const textItems = await extractPageTextItems(reader, pageNumber);
@@ -203,7 +251,9 @@ export async function getPageText(reader: any, itemId: number, pageNumber: numbe
 }
 
 export async function getPageTextWithNeighbors(
-  reader: any, itemId: number, pageNumber: number
+  reader: any,
+  itemId: number,
+  pageNumber: number,
 ): Promise<PageTextData> {
   const current = await getPageText(reader, itemId, pageNumber);
   const paragraphs = [...current.paragraphs];
@@ -217,21 +267,30 @@ export async function getPageTextWithNeighbors(
           paragraphs[paragraphs.length - 1] += " " + next.paragraphs[0];
           modified = true;
         }
-      } catch { /* next page doesn't exist */ }
+      } catch {
+        /* next page doesn't exist */
+      }
     }
     const firstPara = paragraphs[0];
     if (firstPara && !/^[A-Z]/.test(firstPara.trim()) && pageNumber > 1) {
       try {
         const prev = await getPageText(reader, itemId, pageNumber - 1);
         if (prev.paragraphs.length > 0) {
-          paragraphs[0] = prev.paragraphs[prev.paragraphs.length - 1] + " " + firstPara;
+          paragraphs[0] =
+            prev.paragraphs[prev.paragraphs.length - 1] + " " + firstPara;
           modified = true;
         }
-      } catch { /* prev page doesn't exist */ }
+      } catch {
+        /* prev page doesn't exist */
+      }
     }
   }
   if (modified) {
-    return { paragraphs, rawText: paragraphs.join("\n"), timestamp: Date.now() };
+    return {
+      paragraphs,
+      rawText: paragraphs.join("\n"),
+      timestamp: Date.now(),
+    };
   }
   return current;
 }

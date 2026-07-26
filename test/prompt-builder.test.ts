@@ -2,13 +2,13 @@ import { expect } from "chai";
 import { buildPrompt } from "../src/modules/translate/prompt-builder";
 import { ContextLevel, GlossaryEntry } from "../src/types";
 
-describe("prompt-builder", () => {
+describe("prompt-builder", function () {
   const glossaryEntries: GlossaryEntry[] = [
     { term: "epistemological", translation: "认识论的" },
   ];
 
-  describe("buildPrompt", () => {
-    it("builds word-level prompt with sentence context", () => {
+  describe("buildPrompt", function () {
+    it("builds word-level prompt with sentence context", function () {
       const messages = buildPrompt({
         level: ContextLevel.Word,
         selected: "epistemological",
@@ -24,7 +24,7 @@ describe("prompt-builder", () => {
       expect(messages[1].content).to.include("epistemological → 认识论的");
     });
 
-    it("builds sentence-level prompt with paragraph context", () => {
+    it("builds sentence-level prompt with paragraph context", function () {
       const messages = buildPrompt({
         level: ContextLevel.Sentence,
         selected: "This approach challenges assumptions.",
@@ -37,11 +37,12 @@ describe("prompt-builder", () => {
       expect(messages[1].content).to.include("This approach");
     });
 
-    it("builds paragraph-level prompt with surrounding context", () => {
+    it("builds paragraph-level prompt with surrounding context", function () {
       const messages = buildPrompt({
         level: ContextLevel.Paragraph,
         selected: "The methodology paragraph.",
-        context: "[前一段] Introduction.\n\n[选中段] The methodology paragraph.\n\n[后一段] Results.",
+        context:
+          "[前一段] Introduction.\n\n[选中段] The methodology paragraph.\n\n[后一段] Results.",
         glossaryEntries: [],
         targetLanguage: "zh-CN",
       });
@@ -49,7 +50,7 @@ describe("prompt-builder", () => {
       expect(messages[0].content).to.include("段");
     });
 
-    it("includes glossary section when entries match", () => {
+    it("includes glossary section when entries match", function () {
       const messages = buildPrompt({
         level: ContextLevel.Word,
         selected: "epistemological",
@@ -61,7 +62,7 @@ describe("prompt-builder", () => {
       expect(userMsg).to.include("epistemological → 认识论的");
     });
 
-    it("omits glossary section when no entries", () => {
+    it("omits glossary section when no entries", function () {
       const messages = buildPrompt({
         level: ContextLevel.Word,
         selected: "hello",

@@ -3,8 +3,16 @@
 /* eslint-disable */
 // @ts-nocheck
 export type FluentMessageId =
+  | 'context-translate-item-info-row-example-label'
+  | 'context-translate-item-section-example1-head-text'
+  | 'context-translate-item-section-example1-sidenav-tooltip'
+  | 'context-translate-item-section-example2-button-tooltip'
+  | 'context-translate-item-section-example2-head-text'
+  | 'context-translate-item-section-example2-sidenav-tooltip'
   | 'context-translate-menuitem-history'
   | 'context-translate-menuitem-translate'
+  | 'context-translate-paper-jobs-menu'
+  | 'context-translate-paper-menu'
   | 'context-translate-prefs-auto-mode'
   | 'context-translate-prefs-glossary-export'
   | 'context-translate-prefs-glossary-import'
@@ -16,11 +24,6 @@ export type FluentMessageId =
   | 'context-translate-prefs-llm-title'
   | 'context-translate-prefs-target-language'
   | 'context-translate-prefs-translate-title'
-  | 'item-info-row-example-label'
-  | 'item-section-example1-head-text'
-  | 'item-section-example1-sidenav-tooltip'
-  | 'item-section-example2-button-tooltip'
-  | 'item-section-example2-head-text'
-  | 'item-section-example2-sidenav-tooltip'
-  | 'startup-begin'
-  | 'startup-finish';
+  | 'context-translate-startup-begin'
+  | 'context-translate-startup-finish'
+  | 'context-translate-workbench-toolbar-button';

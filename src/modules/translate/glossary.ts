@@ -113,7 +113,10 @@ export function removeGlossaryEntry(
  * First line is treated as a header and skipped.
  */
 export function glossaryFromCSV(csv: string): GlossaryEntry[] {
-  const lines = csv.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = csv
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   // Skip header row
   const dataLines = lines.slice(1);
   return dataLines.map((line) => {

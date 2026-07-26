@@ -78,7 +78,14 @@ function contextLabel(level: ContextLevel): string {
  * then injected into the user message when present.
  */
 export function buildPrompt(input: BuildPromptInput): ChatMessage[] {
-  const { level, selected, context, glossaryEntries, targetLanguage, hasDictResult } = input;
+  const {
+    level,
+    selected,
+    context,
+    glossaryEntries,
+    targetLanguage,
+    hasDictResult,
+  } = input;
 
   const systemContent = systemPromptFor(level, hasDictResult);
 

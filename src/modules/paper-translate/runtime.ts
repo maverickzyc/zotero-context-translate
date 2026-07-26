@@ -1,7 +1,12 @@
 export function createZoteroAbortController(): AbortController {
   const { mainWindow, hiddenWindow } = domWindows();
+  const runtime = globalThis as typeof globalThis & {
+    AbortController?: typeof AbortController;
+  };
   const Constructor =
-    mainWindow?.AbortController || hiddenWindow?.AbortController;
+    mainWindow?.AbortController ||
+    hiddenWindow?.AbortController ||
+    runtime.AbortController;
   if (typeof Constructor !== "function") {
     throw new Error("Zotero DOM window does not provide AbortController");
   }
@@ -31,7 +36,12 @@ export function zoteroFetch(
   init?: RequestInit,
 ): Promise<Response> {
   const { mainWindow, hiddenWindow } = domWindows();
-  const owner = mainWindow?.fetch ? mainWindow : hiddenWindow;
+  const runtime = globalThis as typeof globalThis & { fetch?: typeof fetch };
+  const owner = mainWindow?.fetch
+    ? mainWindow
+    : hiddenWindow?.fetch
+      ? hiddenWindow
+      : runtime;
   if (typeof owner?.fetch !== "function") {
     throw new Error("Zotero DOM window does not provide fetch");
   }
@@ -40,7 +50,11 @@ export function zoteroFetch(
 
 export function createZoteroTextDecoder(): TextDecoder {
   const { mainWindow, hiddenWindow } = domWindows();
-  const Constructor = mainWindow?.TextDecoder || hiddenWindow?.TextDecoder;
+  const runtime = globalThis as typeof globalThis & {
+    TextDecoder?: typeof TextDecoder;
+  };
+  const Constructor =
+    mainWindow?.TextDecoder || hiddenWindow?.TextDecoder || runtime.TextDecoder;
   if (typeof Constructor !== "function") {
     throw new Error("Zotero DOM window does not provide TextDecoder");
   }

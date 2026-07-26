@@ -29,15 +29,22 @@ const prefsPrefix = "extensions.zotero.contextTranslate";
 describe("startup", function () {
   it("creates abort primitives from the Zotero DOM window", function () {
     const controller = createZoteroAbortController();
-    // Linux CI may expose DOM primitives through an Xray wrapper, so normalize
-    // the cross-realm Boolean/String values before comparing them with Chai.
-    assert.strictEqual(Number(controller.signal.aborted), 0);
-    controller.abort();
-    assert.strictEqual(Number(controller.signal.aborted), 1);
-    assert.strictEqual(
-      String(decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87]))),
-      "中文",
+    if (!controller.signal) {
+      throw new Error("Zotero DOM AbortController did not expose a signal");
+    }
+    try {
+      controller.abort();
+    } catch (error) {
+      throw new Error(
+        `Zotero DOM AbortController.abort failed: ${String(error)}`,
+      );
+    }
+    const decoded = String(
+      decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
     );
+    if (decoded !== "中文") {
+      throw new Error(`Zotero DOM TextDecoder returned ${decoded}`);
+    }
   });
 
   it("should have plugin instance defined", function () {

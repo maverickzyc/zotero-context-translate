@@ -28,22 +28,36 @@ const prefsPrefix = "extensions.zotero.contextTranslate";
 
 describe("startup", function () {
   it("creates abort primitives from the Zotero DOM window", function () {
-    const controller = createZoteroAbortController();
-    if (!controller.signal) {
+    let controller: AbortController;
+    try {
+      controller = createZoteroAbortController();
+    } catch {
+      throw new Error("Zotero DOM AbortController construction failed");
+    }
+    let signal: AbortSignal;
+    try {
+      signal = controller.signal;
+    } catch {
+      throw new Error("Zotero DOM AbortController signal access failed");
+    }
+    if (!signal) {
       throw new Error("Zotero DOM AbortController did not expose a signal");
     }
     try {
       controller.abort();
-    } catch (error) {
-      throw new Error(
-        `Zotero DOM AbortController.abort failed: ${String(error)}`,
-      );
+    } catch {
+      throw new Error("Zotero DOM AbortController.abort failed");
     }
-    const decoded = String(
-      decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
-    );
+    let decoded: string;
+    try {
+      decoded = String(
+        decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
+      );
+    } catch {
+      throw new Error("Zotero DOM TextDecoder construction or decoding failed");
+    }
     if (decoded !== "中文") {
-      throw new Error(`Zotero DOM TextDecoder returned ${decoded}`);
+      throw new Error("Zotero DOM TextDecoder returned unexpected text");
     }
   });
 

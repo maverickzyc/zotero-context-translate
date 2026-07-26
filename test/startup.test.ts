@@ -29,11 +29,13 @@ const prefsPrefix = "extensions.zotero.contextTranslate";
 describe("startup", function () {
   it("creates abort primitives from the Zotero DOM window", function () {
     const controller = createZoteroAbortController();
-    assert.isFalse(controller.signal.aborted);
+    // Linux CI may expose DOM primitives through an Xray wrapper, so normalize
+    // the cross-realm Boolean/String values before comparing them with Chai.
+    assert.strictEqual(Number(controller.signal.aborted), 0);
     controller.abort();
-    assert.isTrue(controller.signal.aborted);
-    assert.equal(
-      decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
+    assert.strictEqual(Number(controller.signal.aborted), 1);
+    assert.strictEqual(
+      String(decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87]))),
       "中文",
     );
   });
@@ -69,7 +71,8 @@ describe("startup", function () {
   });
 
   it("loads a non-empty Zotero 9 menu label from Fluent", async function () {
-    const document = Zotero.getMainWindow().document as Document & {
+    const win = Zotero.getMainWindow();
+    const document = win.document as Document & {
       l10n: {
         formatMessages(keys: Array<{ id: string }>): Promise<
           Array<{
@@ -78,17 +81,27 @@ describe("startup", function () {
         >;
       };
     };
-    const messages = await document.l10n.formatMessages([
+    const keys = [
       { id: "context-translate-paper-menu" },
       { id: "context-translate-paper-jobs-menu" },
-    ]);
-    for (const message of messages) {
-      const label = message?.attributes?.find(
-        (attribute) => attribute.name === "label",
-      )?.value;
-      assert.isString(label);
+    ];
+    let labels: string[] = [];
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const messages = await document.l10n.formatMessages(keys);
+      labels = messages.map((message) =>
+        String(
+          message?.attributes?.find(
+            (attribute) => String(attribute.name) === "label",
+          )?.value || "",
+        ),
+      );
+      if (labels.length === keys.length && labels.every(Boolean)) break;
+      await new Promise((resolve) => win.setTimeout(resolve, 50));
+    }
+    for (const label of labels) {
       assert.isNotEmpty(label);
     }
+    assert.lengthOf(labels, keys.length);
   });
 
   it("adds a Zotero 9 library-toolbar button that opens the workbench", async function () {

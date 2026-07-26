@@ -3,12 +3,6 @@
 /* eslint-disable */
 // @ts-nocheck
 export type FluentMessageId =
-  | 'context-translate-item-info-row-example-label'
-  | 'context-translate-item-section-example1-head-text'
-  | 'context-translate-item-section-example1-sidenav-tooltip'
-  | 'context-translate-item-section-example2-button-tooltip'
-  | 'context-translate-item-section-example2-head-text'
-  | 'context-translate-item-section-example2-sidenav-tooltip'
   | 'context-translate-menuitem-history'
   | 'context-translate-menuitem-translate'
   | 'context-translate-paper-jobs-menu'
@@ -24,6 +18,12 @@ export type FluentMessageId =
   | 'context-translate-prefs-llm-title'
   | 'context-translate-prefs-target-language'
   | 'context-translate-prefs-translate-title'
-  | 'context-translate-startup-begin'
-  | 'context-translate-startup-finish'
-  | 'context-translate-workbench-toolbar-button';
+  | 'context-translate-workbench-toolbar-button'
+  | 'item-info-row-example-label'
+  | 'item-section-example1-head-text'
+  | 'item-section-example1-sidenav-tooltip'
+  | 'item-section-example2-button-tooltip'
+  | 'item-section-example2-head-text'
+  | 'item-section-example2-sidenav-tooltip'
+  | 'startup-begin'
+  | 'startup-finish';

@@ -27,6 +27,7 @@
     "lint:fix": "prettier --write . && eslint . --fix",
     "release": "zotero-plugin release",
     "test": "zotero-plugin test",
+    "test:unit": "node --import=tsx node_modules/mocha/bin/mocha.js \"test/*.test.ts\" --ignore test/startup.test.ts",
     "update-deps": "npm update --save"
   },
   "dependencies": {

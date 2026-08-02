@@ -26,26 +26,67 @@ import { onTextSelectionPopup, onViewContextMenu } from "../src/hooks";
 
 const prefsPrefix = "extensions.zotero.contextTranslate";
 
+/**
+ * The scaffold test reporter sends failures over the wire as JSON, and
+ * `Error.prototype.message` is not enumerable, so a bare `throw new Error(...)`
+ * reaches CI as `undefined`. Reporting through chai keeps the message (chai's
+ * AssertionError owns an enumerable `message`), and folding the original error
+ * into that message is the only way runtime failures stay debuggable in CI.
+ */
+function describeError(error: unknown): string {
+  if (error && typeof error === "object") {
+    const { name, message, stack } = error as {
+      name?: string;
+      message?: string;
+      stack?: string;
+    };
+    return `${name ?? "Error"}: ${message ?? String(error)}${
+      stack ? `\n${stack}` : ""
+    }`;
+  }
+  return String(error);
+}
+
+function withReportedError<T>(label: string, run: () => T): T {
+  try {
+    return run();
+  } catch (error) {
+    assert.fail(`${label} threw ${describeError(error)}`);
+    throw error;
+  }
+}
+
 describe("startup", function () {
   it("constructs an AbortController from the Zotero DOM window", function () {
-    const controller = createZoteroAbortController();
-    if (!controller.signal) {
-      throw new Error("Zotero DOM AbortController did not expose a signal");
-    }
+    const controller = withReportedError("createZoteroAbortController()", () =>
+      createZoteroAbortController(),
+    );
+    assert.isOk(
+      controller.signal,
+      "Zotero DOM AbortController did not expose a signal",
+    );
   });
 
   it("calls abort on the Zotero DOM AbortController", function () {
-    const controller = createZoteroAbortController();
-    controller.abort();
+    const controller = withReportedError("createZoteroAbortController()", () =>
+      createZoteroAbortController(),
+    );
+    withReportedError("AbortController.abort()", () => controller.abort());
+    assert.isTrue(
+      controller.signal.aborted,
+      "Zotero DOM AbortController did not mark its signal as aborted",
+    );
   });
 
   it("decodes UTF-8 through the Zotero DOM TextDecoder", function () {
-    const decoded = String(
-      decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])),
+    const decoded = withReportedError("decodeUTF8()", () =>
+      String(decodeUTF8(new Uint8Array([0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87]))),
     );
-    if (decoded !== "中文") {
-      throw new Error("Zotero DOM TextDecoder returned unexpected text");
-    }
+    assert.strictEqual(
+      decoded,
+      "中文",
+      "Zotero DOM TextDecoder returned unexpected text",
+    );
   });
 
   it("should have plugin instance defined", function () {

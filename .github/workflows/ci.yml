@@ -33,11 +33,26 @@ jobs:
           name: build-result
           path: .scaffold/build
 
-  test:
+  # Pure unit tests. No Zotero runtime, no network, a few seconds — this is the
+  # job that should tell you whether a change is broken.
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup JS
+        uses: zotero-plugin-dev/workflows/setup-js@main
+      - name: Run unit tests
+        run: npm run test:unit
+
+  # Integration tests inside a real Zotero. Note that zotero-plugin-scaffold
+  # downloads the Linux *beta* channel here, which is neither the platform nor
+  # the Zotero build most users run, so failures need to be read against that
+  # environment before assuming a plugin regression.
+  zotero:
     runs-on: ubuntu-latest
     needs:
       - build
     steps:
       - name: Setup JS
         uses: zotero-plugin-dev/workflows/setup-js@main
-      - run: npm run test
+      - name: Run Zotero runtime tests
+        run: npm run test

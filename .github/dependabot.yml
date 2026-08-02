@@ -14,3 +14,19 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # @zotero-plugin/eslint-config declares a peer range of eslint ^9.28.0,
+      # so an eslint 10 bump cannot even install. Drop this once the shared
+      # config supports eslint 10.
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
+      # zotero-plugin-toolkit 5.2.0 moved the ZoteroToolkit export to the
+      # `zotero-plugin-toolkit/ztoolkit` subpath, which breaks
+      # src/utils/ztoolkit.ts at build time. Upgrading is a one-line import
+      # change plus a rebuild, so it should be a deliberate migration rather
+      # than an automated bump.
+      - dependency-name: "zotero-plugin-toolkit"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"

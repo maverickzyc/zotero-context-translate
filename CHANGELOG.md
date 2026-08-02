@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- Resolve `fetch`, `AbortController` and `TextDecoder` without throwing when
+  the platform has no hidden DOM window. Probing `Services.appShell
+.hiddenDOMWindow` raised NS_ERROR_NOT_AVAILABLE instead of returning
+  undefined, which broke whole-paper translation before any fallback could run
+- Resolve all three web APIs from a single scope so an AbortSignal is never
+  passed to a fetch from another realm
+
+### Changed
+
+- Rewrite the README around what the plugin does for a reader, with a
+  comparison against plain selection translators, cost expectations and an FAQ;
+  move developer setup, architecture and gotchas to `docs/development.md`
+- Add an English README, bilingual issue forms and a pull request template
+- Split CI into a fast `unit` job and the Zotero runtime job, and add a
+  `test:unit` script for the 63 pure unit tests
+- Ignore dependency bumps that cannot build: eslint 10 (peer range),
+  zotero-plugin-toolkit 5.2 (moved export) and TypeScript 7 (parser support)
+
+### Tests
+
+- Report Zotero runtime failures through chai so messages survive the test
+  reporter's JSON serialization instead of arriving as `undefined`
+
 ## [0.3.5] - 2026-07-26
 
 ### Added

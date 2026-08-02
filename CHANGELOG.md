@@ -8,10 +8,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
-- Resolve `fetch`, `AbortController` and `TextDecoder` without throwing when
-  the platform has no hidden DOM window. Probing `Services.appShell
-.hiddenDOMWindow` raised NS_ERROR_NOT_AVAILABLE instead of returning
-  undefined, which broke whole-paper translation before any fallback could run
+- Resolve `fetch`, `AbortController` and `TextDecoder` without throwing when the
+  platform has no hidden DOM window. Reading that window raised
+  NS_ERROR_NOT_AVAILABLE instead of returning undefined, which broke whole-paper
+  translation before any fallback could run
 - Resolve all three web APIs from a single scope so an AbortSignal is never
   passed to a fetch from another realm
 

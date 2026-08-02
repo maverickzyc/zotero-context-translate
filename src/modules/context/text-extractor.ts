@@ -232,7 +232,9 @@ async function extractPageTextItems(
     }));
   } catch (evalErr: any) {
     log(`iframe eval failed: ${evalErr?.message || evalErr}`);
-    throw new Error(`Text extraction failed: ${evalErr?.message || evalErr}`);
+    throw new Error(`Text extraction failed: ${evalErr?.message || evalErr}`, {
+      cause: evalErr,
+    });
   }
 }
 

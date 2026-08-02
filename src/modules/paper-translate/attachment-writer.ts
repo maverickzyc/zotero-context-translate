@@ -1,3 +1,4 @@
+import { getItem } from "../../utils/items";
 import { paperJobDirectory } from "./job-store";
 import { PaperJob } from "./types";
 
@@ -34,7 +35,7 @@ export async function writeAndAttachPaperHTML(
   await IOUtils.writeUTF8(outputPath, html);
 
   if (job.outputAttachmentID) {
-    const existing = Zotero.Items.get(job.outputAttachmentID);
+    const existing = getItem(job.outputAttachmentID);
     if (existing && !existing.deleted) {
       const path = await existing.getFilePathAsync();
       if (path && (await IOUtils.exists(path))) {
@@ -46,10 +47,10 @@ export async function writeAndAttachPaperHTML(
 
   const attachmentTitle = `${job.source.title}（双语 HTML）`;
   if (job.source.parentItemID) {
-    const parent = Zotero.Items.get(job.source.parentItemID);
+    const parent = getItem(job.source.parentItemID);
     const candidates = parent
       ?.getAttachments()
-      .map((id) => Zotero.Items.get(id))
+      .map((id) => getItem(id))
       .filter((item): item is Zotero.Item =>
         Boolean(
           item &&
@@ -83,7 +84,7 @@ export async function writeAndAttachPaperHTML(
 }
 
 export async function openPaperAttachment(attachmentID: number): Promise<void> {
-  const attachment = Zotero.Items.get(attachmentID);
+  const attachment = getItem(attachmentID);
   if (!attachment) throw new Error("HTML attachment no longer exists");
   const path = await attachment.getFilePathAsync();
   if (!path) throw new Error("HTML attachment file is not available locally");

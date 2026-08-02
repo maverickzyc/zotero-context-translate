@@ -1,4 +1,5 @@
 import { config } from "../package.json";
+import { getItem } from "./utils/items";
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 
@@ -706,7 +707,7 @@ async function handleTranslation(
     // ── 4. Load glossary and match terms ───────────────────────────────────
     // @ts-expect-error - Zotero.Profile.dir is a runtime API
     const profileDir: string = Zotero.Profile.dir;
-    const sourceItem = itemID ? Zotero.Items.get(itemID) : undefined;
+    const sourceItem = itemID ? getItem(itemID) : undefined;
     const libraryId: number =
       sourceItem?.libraryID || Zotero.Libraries.userLibraryID;
     let glossaryEntries: GlossaryEntry[] = [];

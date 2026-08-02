@@ -189,8 +189,7 @@ export class MinerUDocumentParser implements DocumentParser {
       if (result) {
         const state = String(result.state || "pending");
         const progress = result.extract_progress as
-          | Record<string, unknown>
-          | undefined;
+          Record<string, unknown> | undefined;
         const completed = Number(progress?.extracted_pages || 0);
         const total = Number(progress?.total_pages || 0);
         onProgress({

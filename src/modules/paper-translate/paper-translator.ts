@@ -594,13 +594,11 @@ export async function translatePaperDocument(
       overallTotal,
       `正在逐块补译 ${failedBlocks.length} 个失败内容块`,
     );
-    const retryBatches = failedBlocks.map(
-      (block, index): TranslationBatch => ({
-        id: `repair-${index + 1}`,
-        blockIDs: [block.id],
-        characterCount: block.source.length,
-      }),
-    );
+    const retryBatches = failedBlocks.map((block, index): TranslationBatch => ({
+      id: `repair-${index + 1}`,
+      blockIDs: [block.id],
+      characterCount: block.source.length,
+    }));
     await runConcurrent(
       retryBatches,
       Math.min(options.concurrency, 2),

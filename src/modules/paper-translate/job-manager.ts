@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { getItem } from "../../utils/items";
 import { loadGlossary } from "../translate/glossary";
 import { getLLMConfig } from "../translate/llm-service";
 import { writeAndAttachPaperHTML } from "./attachment-writer";
@@ -253,7 +254,7 @@ class PaperJobManager {
       return existing;
     }
     if (existing?.stage === "completed" && existing.outputAttachmentID) {
-      const output = Zotero.Items.get(existing.outputAttachmentID);
+      const output = getItem(existing.outputAttachmentID);
       const outputPath = await output?.getFilePathAsync();
       if (
         output &&
@@ -309,7 +310,7 @@ class PaperJobManager {
       if (!getLLMConfig().apiKey) {
         throw new Error("请先在 Context Translate 设置中配置 LLM API Key");
       }
-      const attachment = Zotero.Items.get(job.source.attachmentID);
+      const attachment = getItem(job.source.attachmentID);
       if (!attachment) {
         throw new Error("源 PDF 附件已不存在");
       }

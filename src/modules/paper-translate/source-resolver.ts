@@ -1,3 +1,4 @@
+import { getItem } from "../../utils/items";
 import { PaperSource } from "./types";
 
 function getTitle(item: Zotero.Item): string {
@@ -17,7 +18,7 @@ async function findPDFAttachment(item: Zotero.Item): Promise<Zotero.Item> {
 
   const attachments = item
     .getAttachments()
-    .map((id) => Zotero.Items.get(id))
+    .map((id) => getItem(id))
     .filter((candidate): candidate is Zotero.Item =>
       Boolean(candidate && candidate.isPDFAttachment()),
     );

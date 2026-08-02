@@ -30,3 +30,9 @@ updates:
         update-types:
           - "version-update:semver-minor"
           - "version-update:semver-major"
+      # typescript-eslint cannot parse TypeScript 7 yet — the lint job dies with
+      # "Cannot read properties of undefined (reading 'Intrinsic')" before it
+      # reports a single rule. Drop this once the parser catches up.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"

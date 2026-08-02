@@ -4,16 +4,26 @@ All notable changes to this project will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [0.3.6] - 2026-08-02
 
 ### Fixed
 
-- Resolve `fetch`, `AbortController` and `TextDecoder` without throwing when the
-  platform has no hidden DOM window. Reading that window raised
-  NS_ERROR_NOT_AVAILABLE instead of returning undefined, which broke whole-paper
-  translation before any fallback could run
+- Resolve `fetch`, `AbortController` and `TextDecoder` without throwing on
+  runtimes that have no hidden DOM window. Both candidate windows were read
+  eagerly, and reading the hidden one raises NS_ERROR_NOT_AVAILABLE rather than
+  returning undefined, so the lookup failed even when the main window was
+  perfectly usable. That disabled whole-paper translation, streaming output and
+  job cancellation together. Confirmed on headless Linux; macOS was unaffected
 - Resolve all three web APIs from a single scope so an AbortSignal is never
-  passed to a fetch from another realm
+  handed to a fetch from another realm
+- Stop regenerating an HTML attachment from throwing a TypeError when the
+  parent item has been deleted. `Zotero.Items.get()` answers `false` for a
+  missing id, and `false?.getAttachments()` is a call on a boolean rather than
+  a short circuit
+- Stop re-submitting a finished paper job from throwing the same way when its
+  previously generated HTML attachment has been deleted
+- Guard the workbench "locate item" and "locate source PDF" actions when no
+  library pane is available
 
 ### Changed
 
@@ -21,8 +31,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   comparison against plain selection translators, cost expectations and an FAQ;
   move developer setup, architecture and gotchas to `docs/development.md`
 - Add an English README, bilingual issue forms and a pull request template
+- Route every `Zotero.Items.get()` lookup through a `getItem()` helper that
+  normalizes a miss to undefined, so surrounding optional chaining keeps working
 - Split CI into a fast `unit` job and the Zotero runtime job, and add a
   `test:unit` script for the 63 pure unit tests
+- Update 12 dependencies, including zotero-types 4.1, prettier 3.9 and
+  @zotero-plugin/eslint-config 0.6.10
 - Ignore dependency bumps that cannot build: eslint 10 (peer range),
   zotero-plugin-toolkit 5.2 (moved export) and TypeScript 7 (parser support)
 

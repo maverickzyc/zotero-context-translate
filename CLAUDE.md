@@ -7,7 +7,7 @@ A Zotero 8/9 translation plugin with **context-aware translation**: automaticall
 - **Plugin type**: Independent Zotero plugin (bootstrapped extension, XPI)
 - **Target users**: Chinese researchers reading English academic papers
 - **Key differentiator**: Context extraction + two-stage rendering (dict + LLM) vs. zotero-pdf-translate which only translates selected text
-- **Current version**: 0.3.5
+- **Current version**: 0.3.6
 - **Compatibility**: Zotero 8.0 ~ 9.0.\*; primary integration target Zotero
   9.0.6
 
@@ -174,7 +174,7 @@ User selects text → renderTextSelectionPopup event
 
 9. **CI runs the Linux beta channel** — `zotero-plugin test` downloads Zotero from the beta channel on Linux, which is neither the platform nor the build most users run. Read `zotero` job failures against that environment before assuming a plugin regression; the `unit` job is the fast, stable signal.
 
-## Current Status (v0.3.5)
+## Current Status (v0.3.6)
 
 - [x] Core: context-aware translation (word/sentence/paragraph levels)
 - [x] Two-stage rendering: offline dictionary + LLM streaming

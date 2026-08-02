@@ -1,0 +1,113 @@
+name: Bug 反馈 / Bug report
+description: 插件没有按预期工作 / Something is not working
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请**不要**在这里贴 API Key、访问令牌，或有版权/未发表内容的
+        论文原文。日志请先自行脱敏。
+
+        Please do not paste API keys, access tokens, or copyrighted /
+        unpublished paper content here. Redact logs before attaching them.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么 / What happened
+      description: 实际结果，以及你期望的结果
+      placeholder: |
+        我做了……，期望……，实际……
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及功能 / Area
+      options:
+        - 划词查词 / Word lookup
+        - 划词翻译 / Selection translation
+        - 整篇双语 HTML / Whole-paper bilingual HTML
+        - 工作台 / Workbench
+        - 术语表 / Glossary
+        - 词典 / Dictionary
+        - 设置面板 / Settings panel
+        - 安装与更新 / Install and update
+        - 其他 / Other
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: 插件版本 / Plugin version
+      description: 工具 → 插件 里能看到
+      placeholder: "0.3.5"
+    validations:
+      required: true
+
+  - type: input
+    id: zotero-version
+    attributes:
+      label: Zotero 版本 / Zotero version
+      description: 帮助 → 关于 Zotero
+      placeholder: "9.0.6"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统 / OS
+      placeholder: "macOS 15.5 / Windows 11 / Ubuntu 24.04"
+    validations:
+      required: true
+
+  - type: input
+    id: provider
+    attributes:
+      label: 模型服务与模型 / Provider and model
+      description: 不要填 API Key / Do not include the API key
+      placeholder: "DeepSeek, deepseek-v4-flash"
+
+  - type: dropdown
+    id: parser
+    attributes:
+      label: 解析模式 / Parsing mode
+      description: 只有整篇翻译相关的问题需要填
+      options:
+        - 不适用 / Not applicable
+        - 自动 / Auto
+        - MinerU 高保真 / MinerU
+        - Zotero 纯文本 / Zotero plain text
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / Logs
+      description: |
+        帮助 → 调试输出日志 → 查看输出，复制相关部分。整篇翻译的问题也可以
+        在工作台里展开"诊断记录"复制。**贴之前请确认没有 API Key。**
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认 / Checklist
+      options:
+        - label: 我已经搜索过现有 issue，没有重复 / I searched existing issues
+          required: true
+        - label: 我已经确认贴出的内容里没有 API Key 或密钥 / No secrets in this report
+          required: true

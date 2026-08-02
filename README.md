@@ -1,122 +1,255 @@
+<div align="center">
+
+<img src="addon/content/icons/icon.svg" width="88" alt="">
+
 # Zotero Context Translate
 
-面向学术阅读的 Zotero 上下文翻译插件。当前主测试环境为 Zotero 9.0.6，
-声明兼容 Zotero 8.0–9.0.x。它同时支持两种工作流：
+**读英文文献时，划词看得懂语境，整篇读得下双语。**
 
-- 在 PDF Reader 中选中词、句子或段落，结合上下文流式翻译和解释。
-- 将整个英文 PDF 转换成可切换“英文 / 中文 / 双语”的单文件 HTML，并自动保存到原 Zotero 条目。
+一个为中文研究者设计的 Zotero 翻译插件：它不只翻译你选中的那几个词，
+而是先把这句话所在的段落一起读进去，再让大模型给出符合上下文的译文和解释。
+
+[![Release](https://img.shields.io/github/v/release/maverickzyc/zotero-context-translate?style=flat-square&color=CC2936)](https://github.com/maverickzyc/zotero-context-translate/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/maverickzyc/zotero-context-translate/total?style=flat-square)](https://github.com/maverickzyc/zotero-context-translate/releases)
+[![Zotero](https://img.shields.io/badge/Zotero-8.0%20–%209.0-CC2936?style=flat-square)](https://www.zotero.org/)
+[![CI](https://img.shields.io/github/actions/workflow/status/maverickzyc/zotero-context-translate/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/maverickzyc/zotero-context-translate/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
+
+简体中文 · [English](README.en.md)
+
+</div>
+
+<!--
+截图占位：录一段 6~10 秒的 GIF（划词 → 词典秒出 → 大模型流式补充），
+保存为 docs/images/demo-selection.gif，然后删掉这段注释、保留下面一行。
+拍摄清单见 docs/images/README.md。
+
+![划词上下文翻译演示](docs/images/demo-selection.gif)
+-->
+
+## 为什么会有这个插件
+
+读英文论文时，真正卡住人的很少是"这个词什么意思"，而是"这个词在这句话里
+是什么意思"。把选中的短语单独丢给翻译引擎，得到的往往是一个通顺但对不上
+上下文的译文 —— 尤其是术语、指代和长从句。
+
+所以这个插件做了两件事：
+
+1. **翻译前先补上下文。** 选中内容后，插件会从 PDF 里重建它所在的句子和
+   段落（段落级还会带上前后段），连同你的术语表一起交给大模型。
+2. **不让你干等。** 本地离线词典先给出即时结果，大模型的语境解释随后流式
+   补充进同一个浮窗。
+
+在这之上，还可以把**整篇论文**转成一个可切换"英文 / 中文 / 双语"的单文件
+HTML，并自动存回原来的 Zotero 条目 —— 相当于给这篇文献配了一份对照读本。
+
+## 选型参考
+
+如果你只想快速看懂选中的一段文字，
+[zotero-pdf-translate](https://github.com/windingwind/zotero-pdf-translate)
+更成熟、支持的翻译引擎（Google / DeepL / 有道等）也多得多，推荐优先考虑。
+
+本插件的取舍不一样：
+
+|                | Zotero Context Translate                                      | 一般划词翻译插件 |
+| -------------- | ------------------------------------------------------------- | ---------------- |
+| 送给引擎的内容 | 选中文本 **+ 所在句/段 + 前后段**                             | 选中文本本身     |
+| 结果呈现       | 离线词典即时结果 → 大模型流式补充                             | 等引擎返回       |
+| 术语控制       | 按 Zotero 文库隔离的术语表，按正文命中注入                    | 通常没有         |
+| 整篇论文       | 生成可切换语言的单文件 HTML，存回条目                         | 通常没有         |
+| 翻译引擎       | OpenAI 兼容 API（DeepSeek / OpenRouter / Ollama / Claude 等） | 引擎选择更多     |
+
+一句话：**它换来的是译文质量和长文阅读，代价是需要你自己配一个 LLM API。**
 
 ## 安装
 
 1. 从 [Releases](https://github.com/maverickzyc/zotero-context-translate/releases/latest)
-   下载最新的 `zotero-context-translate.xpi`。
-2. 在 Zotero 中打开“工具 → 插件”，点击右上角齿轮，选择“Install Plugin From
-   File…”，安装下载的 XPI，然后重启 Zotero。
-3. 打开“设置 → Context Translate”，配置 DeepSeek 或其他 OpenAI 兼容服务。
-   只有使用 MinerU 高保真解析时才需要额外填写 MinerU Token。
+   下载 `zotero-context-translate.xpi`。
+2. Zotero 里打开 **工具 → 插件**，点右上角齿轮 → **Install Plugin From File…**，
+   选中刚下载的 XPI，重启 Zotero。
+3. 打开 **设置 → Context Translate**，填入 DeepSeek 或其他 OpenAI 兼容服务的
+   API 地址、密钥和模型。
 
-插件声明兼容 Zotero 8.0–9.0.x，当前主要在 Zotero 9.0.6 上开发和验证。
+安装后插件会通过 GitHub Releases 自动检查更新，不需要每次手动装。
 
-## 整篇论文双语 HTML
+<!--
+截图占位：设置面板全貌，保存为 docs/images/preferences.png
 
-在 Zotero 文库中右键文献条目或 PDF 附件，选择“生成双语 HTML”。也可以在 PDF Reader 标签页的右键菜单中触发。
+![设置面板](docs/images/preferences.png)
+-->
 
-处理流程：
+> **兼容性**：声明支持 Zotero 8.0 – 9.0.\*，日常开发和验证在 Zotero 9.0.6 上进行。
+> 目前只支持 PDF 阅读器，EPUB 尚未支持。
 
-1. MinerU 高保真解析 PDF，或使用 Zotero 全文索引进行纯文本解析。
-2. 将论文整理成带稳定 ID 的结构化内容块，并保守合并跨页或浮动图表打断的
-   续句。
-3. 从原 skill 内置的 483 条领域术语和当前 Zotero Library 术语中按正文命中，
-   再生成论文专属短术语表；用户术语优先。
-4. 使用 DeepSeek/OpenAI 兼容 API 并发翻译，只填写中文字段。
-5. 检查所有可译块、引用占位符和图片资源。
-6. 渲染自包含 HTML，并作为 `text/html` 子附件导入原条目。
+### 关于费用
 
-任务按块保存，失败或暂停后可从“工具 → Context Translate 工作台”继续，
-不会重译已经完成的内容。
+插件本身免费开源。真正产生费用的是你自己配的 LLM API：
 
-## Context Translate 工作台
+- **完全免费的用法**：查词时选"仅本地词典"，全程不联网、不调用 API。
+- **划词翻译**：每次几百到几千 token，DeepSeek 这类服务基本可以忽略不计。
+- **整篇论文翻译**：一篇 20 页的论文通常是几万到十几万 token，请按你的服务商
+  单价自行估算。MinerU 高保真解析另有其自身的配额规则。
 
-从 Zotero 文献列表顶部、搜索框左侧的工作台按钮打开统一面板；也可以使用
-“工具 → Context Translate 工作台”：
+## 主要功能
 
-- “查词与翻译历史”区分单词查词、短语翻译、句子和段落翻译。单词记录会分别
-  保存音标、词性、本地词典释义与 DeepSeek 语境解释，并可搜索这些字段；同时
-  支持复制、定位条目和删除记录。
-- “整篇翻译任务”展示解析 PDF、识别结构、生成术语、翻译、校验、渲染 HTML
-  和保存附件的完整阶段，以及块进度、总体进度、错误和 Token 用量。
-- 任务运行时面板实时更新；暂停、失败或 Zotero 重启中断后会保留中断阶段，
-  “继续”操作会立即显示恢复状态。
-- 每个任务显示尝试次数和最近活动时间；展开“诊断记录”可查看阶段事件和
-  已脱敏的错误栈，方便区分 API、解析、翻译与附件写入问题。
+### 划词上下文翻译
 
-完成一次选中文本翻译后，也可以从翻译弹窗中的“工作台”按钮进入历史页签。
-已完成的整篇任务可点击“重新生成 HTML”，直接使用保存的译文检查点更新原
-Zotero 附件，不会再次调用 MinerU 或翻译 API。
-如果旧任务存在跨页断句或未翻译的叙述式连接词，点击“修复结构并补译”；插件
-只会调用当前 LLM 补译受影响内容块，再更新同一个 HTML 附件。
+选中文本后浮层会并排给出**查词**和**翻译**两个按钮，由你决定走哪条路，
+不会因为你只选了一个词就自动改成查词。
 
-生成的 HTML 使用纯 CSS 语言切换：宽屏下按钮位于正文左侧独立栏，窄屏下改为
-静态顶部栏，避免与 Zotero 的高亮批注浮层覆盖正文。
+- **查词** —— 先出本地词典结果（音标、词性、释义），再按设置补充大模型的
+  语境解释。也可以设成"仅本地词典"，完全不调用 API。
+- **翻译** —— 始终带上下文翻译。选中的是句子就提取所在段落；选中的是段落
+  就再带上前后段，并额外给出衔接关系和核心论点。
 
-### 解析模式
+支持流式输出、翻译缓存（同一文档同一页的相同文本直接命中）、历史记录，
+以及按 Zotero 文库隔离的术语表。Zotero 9 的阅读器右键菜单里也有
+"上下文查词 / 上下文翻译"两个入口。
 
-- `自动`：配置了 MinerU Token 时使用高保真解析，否则使用 Zotero 纯文本。
-- `MinerU 高保真`：支持复杂排版、扫描 OCR、图片、表格和公式；PDF 会上传到 MinerU。
-- `Zotero 纯文本`：不上传 PDF，但不保证图片、公式、表格及复杂阅读顺序。
+<!--
+截图占位：浮窗两栏（上译文 / 下解析），保存为 docs/images/popup.png
 
-### DeepSeek 配置
+![翻译浮窗](docs/images/popup.png)
+-->
 
-在“设置 → Context Translate”中选择 DeepSeek，配置 API Key。内置默认模型为 `deepseek-v4-flash`，整篇翻译默认关闭 thinking mode，并使用 2 个并发批次。
+### 整篇论文双语 HTML
 
-## 选中文本上下文翻译
+在文库里右键文献条目或 PDF 附件，选择**生成双语 HTML**；PDF 阅读器标签页的
+右键菜单里也有同样的入口。
 
-- 手动模式下，划词浮层始终并排显示“查词”和“翻译”两个按钮，不再根据
-  选中的词数自动决定路线。
-- “查词”：查询单个英文词时先显示本地词典，再按设置补充 DeepSeek 语境解释；
-  也可以选择“仅本地词典”，完全不调用 API。选择短语后仍可主动请求 DeepSeek
-  的语境解释，但本地词典只进行单词精确查询。
-- “翻译”：始终执行上下文翻译，即使只选择了一个英文词也不会切换到查词。
-- 句子：提取所在段落，给出翻译和逻辑角色。
-- 段落：提取前后段，给出翻译、衔接关系和核心论点。
-- 支持流式输出、翻译缓存、历史记录和按 Zotero Library 隔离的术语表。
+生成的 HTML 是**单文件、自包含**的，语言切换用纯 CSS 实现（没有 JavaScript），
+所以在 Zotero 自带的快照阅读器里也能正常切换。宽屏时切换按钮在正文左侧独立栏，
+窄屏时退化成顶部静态栏，不会挡住 Zotero 的批注浮层。
 
-划词浮层与翻译弹窗使用矢量图标；Zotero 9 Reader 右键菜单同时提供无 Emoji
-的纯文字“上下文查词 / 上下文翻译”入口。
+处理流程大致是：解析 PDF → 整理成带稳定 ID 的结构化内容块 → 生成论文专属
+术语表 → 并发翻译 → 校验 → 渲染 HTML → 作为 `text/html` 子附件导入原条目。
 
-## 开发
+**解析模式**可以在设置里选：
 
-```bash
-npm install
-npm run build
-node --import=tsx node_modules/mocha/bin/mocha.js "test/*.test.ts" --ignore test/startup.test.ts
-```
+| 模式          | 说明                                             | 会上传 PDF 吗 |
+| ------------- | ------------------------------------------------ | ------------- |
+| 自动          | 配了 MinerU Token 就走高保真，否则走纯文本       | 视情况        |
+| MinerU 高保真 | 支持复杂排版、扫描件 OCR、图片、表格、公式       | **会**        |
+| Zotero 纯文本 | 只用 Zotero 已有的全文索引，不保证图表和阅读顺序 | 不会          |
 
-构建产物位于：
+三套模板可选：`classic` / `minimal` / `magazine`。
 
-```text
-.scaffold/build/zotero-context-translate.xpi
-```
+<!--
+截图占位：生成的双语 HTML 在 Zotero 里打开的样子（最好是"双语"模式），
+保存为 docs/images/bilingual-html.png
 
-项目使用 TypeScript、`zotero-plugin-scaffold`、`zotero-plugin-toolkit` 和 Firefox 140 构建目标。
+![双语 HTML](docs/images/bilingual-html.png)
+-->
 
-## 隐私
+### 工作台
 
-选中文本翻译会把选中文本与上下文发送到当前配置的 LLM 服务商；整篇翻译会
-发送论文文本。只有选择 MinerU 高保真解析时，PDF 文件才会上传到 MinerU；
-使用 Zotero 纯文本解析不会上传 PDF。插件会在首次执行整篇翻译前显示确认
-提示。
+从文库列表顶部搜索框左侧的按钮打开，或走**工具 → Context Translate 工作台**。
 
-API Key 保存在 Zotero 本地首选项中，不会包含在插件包、翻译历史或公开仓库
-里。使用第三方 API 时，其数据处理仍受对应服务商的隐私政策约束。
+- **查词与翻译历史** —— 按单词 / 短语 / 句子 / 段落分类。单词记录会分别保存
+  音标、词性、词典释义和大模型解释，这些字段都可以搜索，也支持复制、定位到
+  原条目、删除。
+- **整篇翻译任务** —— 展示解析、识别结构、生成术语、翻译、校验、渲染、保存
+  附件的完整阶段，以及块进度、总体进度、错误和 token 用量。
 
-## 反馈与贡献
+任务是**按块保存**的，所以失败、暂停甚至 Zotero 重启之后都可以从中断的那个
+阶段继续，已经译完的内容不会重译。每个任务还能展开"诊断记录"，看阶段事件和
+脱敏后的错误栈，便于区分是 API、解析、翻译还是附件写入的问题。
 
-- 问题与建议：[GitHub Issues](https://github.com/maverickzyc/zotero-context-translate/issues)
-- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 安全问题：[SECURITY.md](SECURITY.md)
-- 第三方组件与数据许可：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+已完成的任务可以：
+
+- **重新生成 HTML** —— 直接用保存的译文检查点更新附件，不再调用 MinerU 或 LLM。
+- **修复结构并补译** —— 针对跨页断句、未翻译的连接词等问题，只补译受影响的
+  内容块，然后更新同一个 HTML 附件。
+
+<!--
+截图占位：工作台"整篇翻译任务"页签，最好有一个进行中的任务，
+保存为 docs/images/workbench.png
+
+![工作台](docs/images/workbench.png)
+-->
+
+### 术语表与离线词典
+
+- 内置 483 条领域术语，可以按 Zotero 文库各自覆盖。
+- 支持 CSV 导入导出，注入时按正文命中并遵守 token 预算。
+- 词典内置 5 万条精简版 ECDICT；需要更全的可以在设置里下载 77 万条完整版。
+
+### 支持的模型服务
+
+任何 OpenAI 兼容的 `/chat/completions` 接口都可以用，设置里内置了
+DeepSeek / OpenAI / OpenRouter / Ollama / Claude / 自定义 六个预设。
+整篇翻译默认使用 `deepseek-v4-flash`、关闭 thinking mode、2 个并发批次。
+
+## 常见问题
+
+<details>
+<summary><b>API Key 存在哪里？会不会被传出去？</b></summary>
+
+存在 Zotero 本地首选项里，不会打包进插件、不会写进翻译历史、也不会进入仓库。
+只有调用你自己配置的那个服务商时才会随请求发出。
+
+</details>
+
+<details>
+<summary><b>我不想把 PDF 上传到第三方，可以吗？</b></summary>
+
+可以。把解析模式设成 **Zotero 纯文本**，整个流程只使用 Zotero 已有的全文索引，
+PDF 文件不会离开你的电脑（论文的文本内容仍然会发给你配置的 LLM）。
+只有选择 MinerU 高保真解析时，PDF 才会上传到 MinerU。
+
+</details>
+
+<details>
+<summary><b>能翻译成英文以外的语言吗？</b></summary>
+
+目标语言在设置里可以改，默认是简体中文。提示词是围绕"英文学术文献 → 中文"
+调优的，其他语言方向可以用，但效果没有专门验证过。
+
+</details>
+
+<details>
+<summary><b>支持 EPUB 吗？支持 Zotero 7 吗？</b></summary>
+
+都还不支持。目前只覆盖 PDF 阅读器，manifest 声明的兼容范围是 Zotero 8.0 – 9.0.\*。
+
+</details>
+
+<details>
+<summary><b>整篇翻译跑到一半失败了怎么办？</b></summary>
+
+不用重来。打开工作台找到那个任务，点"继续"，它会从中断的阶段接着跑，
+已经译完的块不会重译。如果译文里出现跨页断句或漏译的连接词，
+对已完成的任务点"修复结构并补译"。
+
+</details>
+
+<details>
+<summary><b>可以完全离线用吗？</b></summary>
+
+查词可以 —— 把查词模式设成"仅本地词典"即可。翻译不行，它依赖 LLM API。
+如果你在本地跑 Ollama，把它配成自定义服务商也算是一种离线方案。
+
+</details>
+
+## 隐私与数据
+
+- 划词翻译会把**选中文本及其上下文**发送到你配置的 LLM 服务商；整篇翻译会
+  发送**论文正文**。
+- 只有选择 MinerU 高保真解析时，PDF 文件本身才会上传到 MinerU；
+  Zotero 纯文本模式不上传 PDF。
+- 首次执行整篇翻译前会有确认提示。
+- API Key 保存在 Zotero 本地首选项中，不会包含在插件包、翻译历史或公开仓库里。
+- 使用第三方 API 时，其数据处理仍受对应服务商的隐私政策约束。
+
+## 参与进来
+
+- 问题与建议 → [GitHub Issues](https://github.com/maverickzyc/zotero-context-translate/issues)
+- 开发环境、架构说明、测试方式 → [docs/development.md](docs/development.md)
+- 贡献指南 → [CONTRIBUTING.md](CONTRIBUTING.md)
+- 安全问题 → [SECURITY.md](SECURITY.md)
+- 第三方组件与数据许可 → [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+- 版本变更 → [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-本项目采用 [AGPL-3.0-or-later](LICENSE) 许可证。
+[AGPL-3.0-or-later](LICENSE)

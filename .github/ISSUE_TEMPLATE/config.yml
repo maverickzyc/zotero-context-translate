@@ -1,0 +1,10 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全问题 / Security issue
+    url: https://github.com/maverickzyc/zotero-context-translate/blob/main/SECURITY.md
+    about: 请不要公开提交安全问题，按 SECURITY.md 的方式私下报告。
+  # 打开仓库 Settings → General → Features → Discussions 之后，
+  # 取消下面三行的注释，使用问题就可以分流到讨论区。
+  # - name: 使用问题与讨论 / Questions and discussion
+  #   url: https://github.com/maverickzyc/zotero-context-translate/discussions
+  #   about: 不确定是不是 bug、想问怎么配置、想聊用法，都可以来这里。

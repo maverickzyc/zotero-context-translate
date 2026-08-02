@@ -4,6 +4,7 @@ import {
   ParsedPaper,
   ParserProgress,
 } from "../types";
+import { getItem } from "../../../utils/items";
 import { createAbortError } from "../runtime";
 
 export class ZoteroFulltextDocumentParser implements DocumentParser {
@@ -14,7 +15,7 @@ export class ZoteroFulltextDocumentParser implements DocumentParser {
     signal: AbortSignal,
   ): Promise<ParsedPaper> {
     if (signal.aborted) throw createAbortError();
-    const attachment = Zotero.Items.get(source.attachmentID);
+    const attachment = getItem(source.attachmentID);
     if (!attachment) throw new Error("Source PDF attachment no longer exists");
 
     onProgress({ completed: 0, total: 1, message: "正在读取 Zotero 全文索引" });

@@ -216,8 +216,7 @@ export async function streamTranslation(
     }
 
     const streamReader = response.body?.getReader() as
-      | ReadableStreamDefaultReader<Uint8Array>
-      | undefined;
+      ReadableStreamDefaultReader<Uint8Array> | undefined;
     if (!streamReader) {
       callbacks.onError(new Error("Response body is not readable"));
       return;

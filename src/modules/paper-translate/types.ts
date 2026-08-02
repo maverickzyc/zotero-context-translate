@@ -15,10 +15,7 @@ export type PaperBlockType =
   | "drop";
 
 export type PaperBlockStatus =
-  | "pending"
-  | "translated"
-  | "validated"
-  | "failed";
+  "pending" | "translated" | "validated" | "failed";
 
 export interface PaperBlock {
   id: string;

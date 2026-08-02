@@ -1,3 +1,4 @@
+import { getItem } from "../../utils/items";
 import { ContextLevel, HistoryRecord } from "../../types";
 import { openPaperAttachment } from "../paper-translate/attachment-writer";
 import { paperJobManager } from "../paper-translate/job-manager";
@@ -167,7 +168,7 @@ function copyText(value: string): void {
 }
 
 function historyItemTitle(record: HistoryRecord): string {
-  const item = Zotero.Items.get(Number(record.itemId));
+  const item = getItem(Number(record.itemId));
   const parent = item && item.parentItem;
   const sourceItem = parent || item;
   const title =
@@ -562,7 +563,12 @@ async function mountTranslateWorkbench(
         showToast("结果已复制");
       }),
       createButton(document, "定位条目", () => {
-        Zotero.getActiveZoteroPane().selectItem(Number(record.itemId), true);
+        const pane = Zotero.getActiveZoteroPane();
+        if (!pane) {
+          showToast("没有可用的文库窗口", true);
+          return;
+        }
+        pane.selectItem(Number(record.itemId), true);
       }),
       createButton(
         document,
@@ -992,7 +998,12 @@ async function mountTranslateWorkbench(
     }
     actions.append(
       createButton(document, "定位原 PDF", () => {
-        Zotero.getActiveZoteroPane().selectItem(job.source.attachmentID, true);
+        const pane = Zotero.getActiveZoteroPane();
+        if (!pane) {
+          showToast("没有可用的文库窗口", true);
+          return;
+        }
+        pane.selectItem(job.source.attachmentID, true);
       }),
     );
     card.append(

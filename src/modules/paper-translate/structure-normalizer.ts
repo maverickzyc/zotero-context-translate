@@ -68,15 +68,13 @@ function floatContinuationIndex(
       return hasFloat && onlyFloatMatter ? index : null;
     }
     intermediate.push(block);
-    if (
-      !(
-        block.type === "table" ||
-        block.type === "image" ||
-        block.type === "caption" ||
-        isFloatLabel(block) ||
-        (block.type === "paragraph" && block.source.length <= 260)
-      )
-    ) {
+    if (!(
+      block.type === "table" ||
+      block.type === "image" ||
+      block.type === "caption" ||
+      isFloatLabel(block) ||
+      (block.type === "paragraph" && block.source.length <= 260)
+    )) {
       return null;
     }
   }

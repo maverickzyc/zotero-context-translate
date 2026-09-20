@@ -37,6 +37,28 @@ describe("paper-translator formatting", function () {
     expect(restored).to.include('<td colspan="2">');
   });
 
+  it("protects and restores numeric bracket citations", function () {
+    const source =
+      "HybridFlow supports 3D parallelism [71], ZeRO [59], PyTorch FSDP [57], " +
+      "and prior RLHF systems [17, 30, 82].";
+    const protectedText = protectTranslationText(source);
+
+    expect(protectedText.text).not.to.match(/\[(?:17|30|57|59|71|82)\]/);
+    expect([...protectedText.values.values()]).to.deep.equal([
+      "[71]",
+      "[59]",
+      "[57]",
+      "[17, 30, 82]",
+    ]);
+
+    const restored = restoreTranslationText(
+      `译文：${protectedText.text}`,
+      protectedText,
+    );
+    expect(restored).to.equal(`译文：${source}`);
+    expect(restored).not.to.match(/⟦CIT_\d+⟧/);
+  });
+
   it("fails when a protected token is lost", function () {
     const protectedText = protectTranslationText("See (Rose, 1999).");
     expect(() => restoreTranslationText("参见该文。", protectedText)).to.throw(

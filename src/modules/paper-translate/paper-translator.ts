@@ -67,6 +67,11 @@ const PROTECTED_PATTERNS: Array<{
   { kind: "DOI", pattern: /\b10\.\d{4,9}\/[-._;()/:A-Z0-9]+\b/gi },
   {
     kind: "CIT",
+    pattern:
+      /\[\s*\d+(?:\s*[-–—]\s*\d+)?(?:\s*[,;]\s*\d+(?:\s*[-–—]\s*\d+)?)*\s*\]/g,
+  },
+  {
+    kind: "CIT",
     pattern: NARRATIVE_CITATION,
   },
   {
